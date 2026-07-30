@@ -13,58 +13,13 @@ or touch a command line.
 
 ## What you'll set up, in order
 
-1. A GitHub account and a repository (a folder in the cloud) to hold the code
-2. A push notification app on your phone (ntfy)
-3. The bot's settings (what to search for)
-4. GitHub Actions turned on, so it runs automatically
 
----
-
-## Step 1: Create a GitHub account
-
-If you don't already have one: go to [github.com](https://github.com) and
-sign up. It's free.
-
-## Step 2: Create a new repository
-
-A "repository" (or "repo") is just a folder for your project that lives on
-GitHub.
-
-1. Click the **+** icon in the top-right corner → **New repository**
-2. Name it something like `vinted-deal-bot`
-3. Set it to **Public** — this matters because public repos get *unlimited*
-   free minutes to run the bot, while private repos are capped at 2,000
-   minutes/month (still plenty, but public is simpler). The only "private"
-   info in this repo is item ID numbers, nothing personal.
-4. Click **Create repository**
-
-## Step 3: Upload the bot's files
-
-You should have four files/folders from me:
-- `vinted_bot.py`
-- `requirements.txt`
-- `seen_ids.json`
-- `.github/workflows/check.yml`
-
-On your new repo's GitHub page:
-
-1. Click **Add file** → **Upload files**
-2. Drag in `vinted_bot.py`, `requirements.txt`, and `seen_ids.json`
-3. Click **Commit changes** at the bottom
-
-The `.github/workflows/check.yml` file needs to go in a folder structure,
-which the upload box handles automatically if you drag the whole
-`.github` folder in — do that the same way as step above (or create it by
-hand: **Add file → Create new file**, and type `.github/workflows/check.yml`
-as the file name — GitHub will create the folders for you — then paste in
-the workflow content and commit).
-
-## Step 4: Set up push notifications (ntfy)
+## Step 1: Set up push notifications (ntfy)
 
 1. Install the **ntfy** app on your phone (search "ntfy" on the App Store
    or Google Play — it's free, no account needed)
 2. Open the app and subscribe to a topic name — think of this like a
-   private-ish channel name, e.g. `leo-vinted-deals-x7k2`. Make it random
+   private-ish channel name, e.g. `xxx-vinted-deals-x7k2`. Make it random
    so strangers can't guess it and see your alerts.
 3. Keep that exact topic name — you'll paste it into the bot's settings next
 
