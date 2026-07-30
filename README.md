@@ -23,7 +23,7 @@ or touch a command line.
    so strangers can't guess it and see your alerts.
 3. Keep that exact topic name — you'll paste it into the bot's settings next
 
-## Step 5: Edit the bot's settings
+## Step 2: Edit the bot's settings
 
 Back in your GitHub repo:
 
@@ -37,7 +37,7 @@ Back in your GitHub repo:
    - `PRICE_TO` — optional max price, e.g. `"40"`, or leave as `""` for no limit
 4. Scroll down, click **Commit changes**
 
-## Step 6: Let GitHub Actions push updates back to the repo
+## Step 3: Let GitHub Actions push updates back to the repo
 
 The bot needs permission to save its own "already seen" list.
 
@@ -47,7 +47,7 @@ The bot needs permission to save its own "already seen" list.
 3. Select **Read and write permissions**
 4. Click **Save**
 
-## Step 7: Test it manually
+## Step 4: Test it manually
 
 1. Go to the **Actions** tab at the top of your repo
 2. You should see **Vinted Deal Watcher** listed — click it
@@ -57,7 +57,7 @@ The bot needs permission to save its own "already seen" list.
 5. If nothing goes wrong but you don't get a notification, that's normal —
    it only notifies you when it finds a good deal, not every run
 
-## Step 8: Sit back
+## Step 5: Sit back
 
 Once Step 7 works, the schedule in `check.yml` takes over automatically —
 it'll check every 10 minutes from now on, no further action needed.
