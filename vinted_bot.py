@@ -1,10 +1,10 @@
 """
 Vinted Deal & Scam Watcher
 ---------------------------
-Checks Vinted for specific console/phone models at set price ceilings
-(matching a resale price guide), filters out accessories/games/discs,
-flags anything that looks like a scam, and sends a push notification
-via ntfy.sh for whatever's left.
+Checks Vinted for a broad set of resellable electronics, flags listings
+that are meaningfully cheaper than similar current listings, filters out
+accessories/games/broken units, flags anything that looks like a scam,
+and sends a push notification via ntfy.sh for whatever's left.
  
 Run locally with:
     python vinted_bot.py
@@ -15,6 +15,7 @@ See the README for setup steps.
  
 import json
 import re
+import statistics
 from pathlib import Path
  
 import requests
@@ -27,60 +28,38 @@ VINTED_DOMAIN = "www.vinted.com"   # US site — change to www.vinted.co.uk etc 
 CURRENCY_SYMBOL = "$"
 PER_PAGE = 40
  
-# Phrases that disqualify a listing for ANY console search — accessories,
-# games, discs, broken units. Uses phrases like "case for" rather than
-# bare "case" so it doesn't reject real listings that just mention a
-# bundled controller/case/charger (which is normal and fine).
-CONSOLE_ACCESSORY_EXCLUDES = [
-    "game", "games", "disc", "disk", "cd",
-    "controller only", "just controller", "controller for",
-    "case only", "case for", "skin for", "cover for",
-    "screen protector", "charger only", "charger for",
-    "cable only", "headset only", "empty box", "box only",
-    "manual only", "broken", "faulty", "for parts", "spares",
-]
- 
-# Same idea, for phones.
-PHONE_EXCLUDES = [
+# Phrases that disqualify ANY listing — accessories, games, broken units.
+# Uses phrases like "case for" rather than bare "case" so it doesn't
+# reject real listings that just mention a bundled case/charger.
+ELECTRONICS_EXCLUDES = [
     "case only", "case for", "cover for", "screen protector",
     "charger only", "charger for", "cable only", "adapter only",
-    "empty box", "box only", "sim card only",
+    "empty box", "box only", "manual only", "sim card only",
     "for parts", "spares", "broken", "cracked", "faulty",
+    "game", "games", "disc", "disk",
 ]
-PHONE_REQUIRES = ["unlocked"]  # at least one of these must appear in the text
  
-# Every entry is one specific thing to hunt for. price_to is a HARD
-# ceiling — Vinted itself won't return listings above it, so anything
-# that comes back and clears the filters below already fits the target
-# price from Jack's list.
+# Broad set of resellable electronics categories. No price cap needed —
+# "good deal" is judged relative to other current listings for the same
+# search (see DEAL_DISCOUNT_THRESHOLD below), not a fixed number.
+# Add/remove entries freely; each one is checked independently.
 SEARCH_ITEMS = [
-    {"label": "PS4 Slim 1TB", "search_text": "ps4 slim 1tb", "price_to": "55",
-     "exclude_keywords": CONSOLE_ACCESSORY_EXCLUDES},
-    {"label": "PS4 Slim 500GB", "search_text": "ps4 slim 500gb", "price_to": "40",
-     "exclude_keywords": CONSOLE_ACCESSORY_EXCLUDES},
-    {"label": "PS4 Pro 1TB", "search_text": "ps4 pro 1tb", "price_to": "65",
-     "exclude_keywords": CONSOLE_ACCESSORY_EXCLUDES},
-    {"label": "Nintendo Switch", "search_text": "nintendo switch", "price_to": "60",
-     "exclude_keywords": CONSOLE_ACCESSORY_EXCLUDES + ["switch 2", "lite"]},
-    {"label": "Xbox Series X 1TB", "search_text": "xbox series x 1tb", "price_to": "270",
-     "exclude_keywords": CONSOLE_ACCESSORY_EXCLUDES},
-    {"label": "Xbox Series S 1TB", "search_text": "xbox series s 1tb", "price_to": "140",
-     "exclude_keywords": CONSOLE_ACCESSORY_EXCLUDES},
-    {"label": "Xbox Series S 500GB", "search_text": "xbox series s 500gb", "price_to": "120",
-     "exclude_keywords": CONSOLE_ACCESSORY_EXCLUDES},
-    {"label": "iPhone 13", "search_text": "iphone 13", "price_to": "100",
-     "exclude_keywords": PHONE_EXCLUDES, "require_keywords": PHONE_REQUIRES,
-     "min_battery_percent": 75},
-    {"label": "iPhone 14", "search_text": "iphone 14", "price_to": "175",
-     "exclude_keywords": PHONE_EXCLUDES, "require_keywords": PHONE_REQUIRES,
-     "min_battery_percent": 75},
-    {"label": "iPhone 15", "search_text": "iphone 15", "price_to": "250",
-     "exclude_keywords": PHONE_EXCLUDES, "require_keywords": PHONE_REQUIRES,
-     "min_battery_percent": 75},
-    {"label": "iPhone 16", "search_text": "iphone 16", "price_to": "300",
-     "exclude_keywords": PHONE_EXCLUDES, "require_keywords": PHONE_REQUIRES,
-     "min_battery_percent": 75},
+    {"label": "iPhone", "search_text": "iphone"},
+    {"label": "Samsung Galaxy", "search_text": "samsung galaxy"},
+    {"label": "iPad", "search_text": "ipad"},
+    {"label": "MacBook", "search_text": "macbook"},
+    {"label": "AirPods", "search_text": "airpods"},
+    {"label": "PS4", "search_text": "ps4"},
+    {"label": "PS5", "search_text": "ps5"},
+    {"label": "Xbox Series", "search_text": "xbox series"},
+    {"label": "Nintendo Switch", "search_text": "nintendo switch"},
 ]
+ 
+# How far below the going rate counts as a "good deal" — 0.30 = 30%
+# cheaper than the median of other listings that came back for that
+# same search, right now. This is a same-moment comparison, not a
+# comparison to historical/past-sold prices (Vinted doesn't expose that).
+DEAL_DISCOUNT_THRESHOLD = 0.30
  
 # A listing needs at least this many red flags to get treated as sketchy
 # and skipped. Lower = stricter, but "seller has no reviews" alone is
@@ -101,7 +80,6 @@ CONTACT_REQUEST_PHRASES = [
     "my number", "send your number", "message me on", "contact me at",
     "paypal friends", "venmo", "zelle",
 ]
-BATTERY_PATTERN = re.compile(r"batter\w*[^\d]{0,15}(\d{2,3})\s*%")
  
 # ---------------------------------------------------------------------------
 # 2. FETCH LISTINGS FROM VINTED
@@ -146,10 +124,8 @@ def item_price(item):
  
  
 def item_text(item):
-    """Everything text-based we can search: title + description if present.
-    Note: Vinted's search-results endpoint often only includes the title,
-    not the full description — so battery-percent and phrase checks may
-    miss things that are only mentioned in the full listing description."""
+    """Title + description if present (search results often only carry
+    the title, not the full description)."""
     return f"{item.get('title', '')} {item.get('description', '')}".lower()
  
  
@@ -163,33 +139,35 @@ def item_location_text(item):
  
  
 # ---------------------------------------------------------------------------
-# 3. FILTERS — accessory/game exclusion, requirements, battery, price
+# 3. FILTERS — accessory/game exclusion, optional price cap
 # ---------------------------------------------------------------------------
  
 def matches_target(item, search):
-    """True only if this listing is actually the thing we're hunting for —
-    not an accessory, game, or disqualified variant."""
+    """True only if this listing is a real item, not an accessory/game/
+    broken unit."""
     text = item_text(item)
+    excludes = search.get("exclude_keywords", ELECTRONICS_EXCLUDES)
  
-    for word in search.get("exclude_keywords", []):
+    for word in excludes:
         if word in text:
             return False, f"matched exclude phrase '{word}'"
  
-    require_words = search.get("require_keywords")
-    if require_words and not any(word in text for word in require_words):
-        return False, f"missing required word (one of {require_words})"
- 
-    min_battery = search.get("min_battery_percent")
-    if min_battery:
-        match = BATTERY_PATTERN.search(text)
-        if match and int(match.group(1)) < min_battery:
-            return False, f"battery listed at {match.group(1)}%, below {min_battery}%"
- 
     price_to = search.get("price_to")
     if price_to and item_price(item) > float(price_to):
-        return False, "priced above target despite search filter"
+        return False, "priced above optional cap"
  
     return True, None
+ 
+ 
+def is_good_deal(item, all_prices):
+    if len(all_prices) < 5:
+        return False  # not enough listings yet to know what "normal" is
+    median_price = statistics.median(all_prices)
+    if median_price == 0:
+        return False
+    price = item_price(item)
+    discount = (median_price - price) / median_price
+    return discount >= DEAL_DISCOUNT_THRESHOLD
  
  
 # ---------------------------------------------------------------------------
@@ -263,11 +241,12 @@ def main():
         listings = get_listings(search["search_text"], search.get("price_to", ""))
  
         if not listings:
-            print(f"[{label}] No listings came back — check search_text/price_to, "
+            print(f"[{label}] No listings came back — check search_text, "
                   f"or Vinted may be temporarily blocking this request.")
             continue
  
         total_checked += len(listings)
+        all_prices = [item_price(item) for item in listings]
  
         for item in listings:
             item_id = str(item.get("id"))
@@ -279,6 +258,9 @@ def main():
             if not ok:
                 continue
  
+            if not is_good_deal(item, all_prices):
+                continue
+ 
             flags = scam_flags(item)
             if len(flags) >= SCAM_FLAG_THRESHOLD:
                 continue
@@ -287,13 +269,9 @@ def main():
             price = item_price(item)
             item_url = f"https://{VINTED_DOMAIN}/items/{item_id}"
  
-            note = ""
-            if search.get("min_battery_percent") and not BATTERY_PATTERN.search(item_text(item)):
-                note = " (battery % not stated — check before buying)"
- 
             send_notification(
-                title=f"{label}: {title}",
-                message=f"{CURRENCY_SYMBOL}{price:.2f} — {title}{note}",
+                title=f"{label} deal: {title}",
+                message=f"{CURRENCY_SYMBOL}{price:.2f} — {title}",
                 url=item_url,
             )
             total_alerts += 1
