@@ -110,9 +110,9 @@ def get_listings(search_text, price_to=""):
         timeout=15,
     )
     print("Status:", response.status_code)
-  print(response.text[:1000])
-return []
-    return response.json().get("items", [])
+    print(response.text[:1000])
+    return []
+   
  
  
 def item_price(item):
