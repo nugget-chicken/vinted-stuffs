@@ -1,0 +1,12 @@
+{
+  "max_new_items_per_run": 20,
+  "watches": [
+    {
+      "name": "iphone",
+      "query": "iphone",
+      "market": "us",
+      "price_to": 300,
+      "min_deal_score": 7
+    }
+  ]
+}
