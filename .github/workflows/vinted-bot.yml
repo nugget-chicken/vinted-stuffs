@@ -30,7 +30,7 @@ jobs:
       - name: Run bot
         env:
           SCRAPEBADGER_API_KEY: ${{ secrets.SCRAPEBADGER_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python scripts/vinted_bot.py
  
