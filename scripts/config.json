@@ -5,34 +5,7 @@
       "name": "iphone-under-300",
       "query": "iphone",
       "market": "us",
-      "price_to": 300,
-      "min_deal_score": 7
-    },
-    {
-      "name": "samsung-galaxy-under-300",
-      "query": "samsung galaxy",
-      "market": "us",
-      "price_to": 300,
-      "min_deal_score": 7
-    },
-    {
-      "name": "google-pixel-under-300",
-      "query": "google pixel",
-      "market": "us",
-      "price_to": 300,
-      "min_deal_score": 7
-    },
-    {
-      "name": "oneplus-under-300",
-      "query": "oneplus",
-      "market": "us",
-      "price_to": 300,
-      "min_deal_score": 7
-    },
-    {
-      "name": "motorola-under-300",
-      "query": "motorola",
-      "market": "us",
+      "price_from": 30,
       "price_to": 300,
       "min_deal_score": 7
     },
@@ -40,6 +13,7 @@
       "name": "ps5-under-300",
       "query": "ps5",
       "market": "us",
+      "price_from": 20,
       "price_to": 300,
       "min_deal_score": 7
     },
@@ -47,6 +21,7 @@
       "name": "ps4-under-300",
       "query": "ps4",
       "market": "us",
+      "price_from": 20,
       "price_to": 300,
       "min_deal_score": 7
     },
@@ -54,6 +29,7 @@
       "name": "xbox-series-under-300",
       "query": "xbox series",
       "market": "us",
+      "price_from": 20,
       "price_to": 300,
       "min_deal_score": 7
     },
@@ -61,6 +37,7 @@
       "name": "xbox-one-under-300",
       "query": "xbox one",
       "market": "us",
+      "price_from": 20,
       "price_to": 300,
       "min_deal_score": 7
     },
@@ -68,15 +45,9 @@
       "name": "nintendo-switch-under-300",
       "query": "nintendo switch",
       "market": "us",
+      "price_from": 20,
       "price_to": 300,
       "min_deal_score": 7
     },
-    {
-      "name": "steam-deck-under-300",
-      "query": "steam deck",
-      "market": "us",
-      "price_to": 300,
-      "min_deal_score": 7
-    }
   ]
 }
