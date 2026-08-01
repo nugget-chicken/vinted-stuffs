@@ -5,7 +5,7 @@ Vinted deal-bot.
 For each configured "watch" (a saved search), this:
   1. calls ScrapeBadger's Vinted search endpoint
   2. drops any listing we've already processed (dedup state in data/seen_listings.json)
-  3. sends the new listings to Claude in one batch to score deal quality + scam risk
+  3. sends the new listings to Gemini in one batch to score deal quality + scam risk
   4. pushes a ntfy alert for anything that clears the watch's threshold
   5. commits the updated dedup state back (handled by the GitHub Actions workflow)
  
@@ -20,12 +20,13 @@ from datetime import datetime, timezone
 from pathlib import Path
  
 import requests
-from anthropic import Anthropic
+from google import genai
+from google.genai import types
  
 STATE_PATH = Path("data/seen_listings.json")
 CONFIG_PATH = Path("scripts/config.json")
 SCRAPEBADGER_BASE = "https://scrapebadger.com/v1"
-CLAUDE_MODEL = "claude-haiku-4-5-20251001"  # cheap + fast, good enough for scoring
+GEMINI_MODEL = "gemini-2.5-flash"  # check aistudio.google.com for the current recommended flash model name
  
  
 # ---------- state ----------
@@ -100,7 +101,7 @@ def get_seller_profile(api_key: str, user_id, market: str) -> dict:
         return {}
  
  
-# ---------- Claude scoring ----------
+# ---------- Gemini scoring ----------
  
 SCORING_PROMPT = """You are screening second-hand Vinted listings for a buyer \
 looking for good deals. For each listing below, score it and return ONLY a \
@@ -126,7 +127,7 @@ Listings:
 """
  
  
-def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
+def score_with_gemini(client: "genai.Client", watch: dict, items: list) -> list:
     listings_json = json.dumps(
         [
             {
@@ -155,17 +156,18 @@ def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
         currency=((items[0].get("price") or {}).get("currency_code", "USD") if items else "USD"),
         listings_json=listings_json,
     )
-    message = client.messages.create(
-        model=CLAUDE_MODEL,
-        max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}],
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+        ),
     )
-    raw = message.content[0].text.strip()
-    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    raw = (response.text or "").strip()
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        print(f"Could not parse Claude response:\n{raw}", file=sys.stderr)
+        print(f"Could not parse Gemini response:\n{raw}", file=sys.stderr)
         return []
  
  
@@ -202,12 +204,12 @@ def send_ntfy(topic: str, item: dict, score: dict) -> None:
  
 def main() -> None:
     scrapebadger_key = os.environ.get("SCRAPEBADGER_API_KEY", "")
-    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
     ntfy_topic = os.environ.get("NTFY_TOPIC", "")
     missing = [
         n for n, v in [
             ("SCRAPEBADGER_API_KEY", scrapebadger_key),
-            ("ANTHROPIC_API_KEY", anthropic_key),
+            ("GEMINI_API_KEY", gemini_key),
             ("NTFY_TOPIC", ntfy_topic),
         ] if not v
     ]
@@ -218,7 +220,7 @@ def main() -> None:
     config = load_config()
     state = load_state()
     seen = set(state["seen_ids"])
-    client = Anthropic(api_key=anthropic_key)
+    client = genai.Client(api_key=gemini_key)
  
     alerts_sent = 0
     for watch in config["watches"]:
@@ -238,7 +240,7 @@ def main() -> None:
             user_id = user.get("id") if isinstance(user, dict) else None
             item["_profile"] = get_seller_profile(scrapebadger_key, user_id, watch.get("market", "us"))
  
-        scores = score_with_claude(client, watch, new_items)
+        scores = score_with_gemini(client, watch, new_items)
         scores_by_id = {s["id"]: s for s in scores}
  
         for item in new_items:
@@ -263,3 +265,4 @@ def main() -> None:
  
 if __name__ == "__main__":
     main()
+ 
