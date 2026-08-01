@@ -78,11 +78,11 @@ JSON array (no prose, no markdown fences) with one object per listing:
   {{"id": <item id>, "deal_score": <1-10>, "scam_risk": "low"|"medium"|"high", "reason": "<one short sentence>"}}
  
 deal_score: how good a price this is for the brand/item/condition (10 = excellent deal, 1 = overpriced).
-scam_risk: based only on the signals given below (seller reputation, favourite \
-count, price relative to what similar items usually go for, whether the price \
-seems implausibly low for the item). You are only seeing a search-result \
-summary, not the full listing description or photos, so default to "medium" \
-when signals are ambiguous rather than guessing "low".
+scam_risk: based only on the signals given below (favourite count, condition, \
+price relative to what similar items usually go for, whether the price seems \
+implausibly low for the item and brand). You are only seeing a search-result \
+summary, not the full listing description, photos, or seller history, so \
+default to "medium" when signals are ambiguous rather than guessing "low".
  
 Buyer is searching for "{query}", budget up to {price_to} {currency}.
  
@@ -92,24 +92,18 @@ Listings:
  
  
 def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
-    # One-time debug dump so we can see ScrapeBadger's real field names in the
-    # Actions log. Safe to delete once the mapping below is confirmed correct.
-    if items:
-        print("DEBUG first raw item:", file=sys.stderr)
-        print(json.dumps(items[0], indent=2, ensure_ascii=False), file=sys.stderr)
- 
     listings_json = json.dumps(
         [
             {
                 "id": it.get("id"),
                 "title": it.get("title", ""),
-                "price": it.get("price", it.get("price_numeric", "?")),
-                "currency": it.get("currency", it.get("currency_code", "")),
+                "price": (it.get("price") or {}).get("amount", "?"),
+                "currency": (it.get("price") or {}).get("currency_code", ""),
                 "brand": it.get("brand_title"),
                 "size": it.get("size_title"),
+                "condition": it.get("status"),
                 "favourite_count": it.get("favourite_count"),
                 "seller": it.get("user", {}).get("login") if isinstance(it.get("user"), dict) else None,
-                "seller_reputation": it.get("user", {}).get("feedback_reputation") if isinstance(it.get("user"), dict) else None,
             }
             for it in items
         ],
@@ -118,7 +112,7 @@ def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
     prompt = SCORING_PROMPT.format(
         query=watch["query"],
         price_to=watch.get("price_to", "any"),
-        currency=items[0]["currency"] if items else "EUR",
+        currency=((items[0].get("price") or {}).get("currency_code", "USD") if items else "USD"),
         listings_json=listings_json,
     )
     message = client.messages.create(
@@ -138,8 +132,8 @@ def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
 # ---------- ntfy ----------
  
 def send_ntfy(topic: str, item: dict, score: dict) -> None:
-    price = item.get("price", item.get("price_numeric", "?"))
-    currency = item.get("currency", item.get("currency_code", ""))
+    price = (item.get("price") or {}).get("amount", "?")
+    currency = (item.get("price") or {}).get("currency_code", "")
     title = f"{score['deal_score']}/10 deal: {item.get('title', '')[:60]}"
     body = (
         f"{price} {currency} - {item.get('brand_title') or 'no brand'} "
@@ -224,4 +218,3 @@ def main() -> None:
  
 if __name__ == "__main__":
     main()
- 
