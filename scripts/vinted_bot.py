@@ -92,18 +92,24 @@ Listings:
  
  
 def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
+    # One-time debug dump so we can see ScrapeBadger's real field names in the
+    # Actions log. Safe to delete once the mapping below is confirmed correct.
+    if items:
+        print("DEBUG first raw item:", file=sys.stderr)
+        print(json.dumps(items[0], indent=2, ensure_ascii=False), file=sys.stderr)
+ 
     listings_json = json.dumps(
         [
             {
-                "id": it["id"],
-                "title": it["title"],
-                "price": it["price"],
-                "currency": it["currency"],
+                "id": it.get("id"),
+                "title": it.get("title", ""),
+                "price": it.get("price", it.get("price_numeric", "?")),
+                "currency": it.get("currency", it.get("currency_code", "")),
                 "brand": it.get("brand_title"),
                 "size": it.get("size_title"),
                 "favourite_count": it.get("favourite_count"),
-                "seller": it.get("user", {}).get("login"),
-                "seller_reputation": it.get("user", {}).get("feedback_reputation"),
+                "seller": it.get("user", {}).get("login") if isinstance(it.get("user"), dict) else None,
+                "seller_reputation": it.get("user", {}).get("feedback_reputation") if isinstance(it.get("user"), dict) else None,
             }
             for it in items
         ],
@@ -132,19 +138,24 @@ def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
 # ---------- ntfy ----------
  
 def send_ntfy(topic: str, item: dict, score: dict) -> None:
-    title = f"{score['deal_score']}/10 deal: {item['title'][:60]}"
+    price = item.get("price", item.get("price_numeric", "?"))
+    currency = item.get("currency", item.get("currency_code", ""))
+    title = f"{score['deal_score']}/10 deal: {item.get('title', '')[:60]}"
     body = (
-        f"{item['price']} {item['currency']} - {item.get('brand_title') or 'no brand'} "
+        f"{price} {currency} - {item.get('brand_title') or 'no brand'} "
         f"- scam risk: {score['scam_risk']}\n{score['reason']}"
     )
+    headers = {
+        "Title": title,
+        "Priority": "high" if score["deal_score"] >= 9 else "default",
+    }
+    url = item.get("url")
+    if url:
+        headers["Click"] = url
     req = urllib.request.Request(
         f"https://ntfy.sh/{topic}",
         data=body.encode("utf-8"),
-        headers={
-            "Title": title,
-            "Click": item["url"],
-            "Priority": "high" if score["deal_score"] >= 9 else "default",
-        },
+        headers=headers,
         method="POST",
     )
     try:
@@ -213,3 +224,4 @@ def main() -> None:
  
 if __name__ == "__main__":
     main()
+ 
