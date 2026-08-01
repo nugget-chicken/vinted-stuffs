@@ -51,7 +51,7 @@ def load_config() -> dict:
 def search_vinted(api_key: str, watch: dict) -> list:
     params = {
         "query": watch["query"],
-        "market": watch.get("market", "fr"),
+        "market": watch.get("market", "us"),
         "per_page": watch.get("per_page", 48),
         "order": watch.get("order", "newest_first"),
     }
@@ -69,6 +69,37 @@ def search_vinted(api_key: str, watch: dict) -> list:
     return resp.json().get("items", [])
  
  
+_profile_debug_printed = False
+ 
+ 
+def get_seller_profile(api_key: str, user_id, market: str) -> dict:
+    """Best-effort seller profile lookup for scam-risk signal (member-since,
+    feedback count). Returns {} on any failure rather than raising, since
+    losing this enrichment shouldn't take down the whole run."""
+    global _profile_debug_printed
+    if not user_id:
+        return {}
+    try:
+        resp = requests.get(
+            f"{SCRAPEBADGER_BASE}/vinted/user",
+            headers={"x-api-key": api_key},
+            params={"user_id": user_id, "market": market},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        if not _profile_debug_printed:
+            print("DEBUG first seller profile response:", file=sys.stderr)
+            print(json.dumps(data, indent=2, ensure_ascii=False), file=sys.stderr)
+            _profile_debug_printed = True
+        return data
+    except requests.RequestException as e:
+        if not _profile_debug_printed:
+            print(f"Seller profile lookup failed (skipping enrichment): {e}", file=sys.stderr)
+            _profile_debug_printed = True
+        return {}
+ 
+ 
 # ---------- Claude scoring ----------
  
 SCORING_PROMPT = """You are screening second-hand Vinted listings for a buyer \
@@ -78,11 +109,15 @@ JSON array (no prose, no markdown fences) with one object per listing:
   {{"id": <item id>, "deal_score": <1-10>, "scam_risk": "low"|"medium"|"high", "reason": "<one short sentence>"}}
  
 deal_score: how good a price this is for the brand/item/condition (10 = excellent deal, 1 = overpriced).
-scam_risk: based only on the signals given below (favourite count, condition, \
-price relative to what similar items usually go for, whether the price seems \
-implausibly low for the item and brand). You are only seeing a search-result \
-summary, not the full listing description, photos, or seller history, so \
-default to "medium" when signals are ambiguous rather than guessing "low".
+scam_risk: weigh these signals in order of importance:
+  1. Seller account age/history (member_since, feedback_count, item_count) — a \
+brand-new account (no feedback, joined very recently, few or no other listings) \
+selling an expensive electronics item is the single strongest scam signal here.
+  2. Whether the price is implausibly low for the item/brand/condition (too-good-to-be-true).
+  3. Low favourite count relative to how good the deal claims to be.
+If seller profile data wasn't available for a listing, say so isn't a reason to \
+assume "low" risk — treat missing seller history the same as a new account \
+(elevated risk), not as a neutral unknown.
  
 Buyer is searching for "{query}", budget up to {price_to} {currency}.
  
@@ -104,6 +139,11 @@ def score_with_claude(client: Anthropic, watch: dict, items: list) -> list:
                 "condition": it.get("status"),
                 "favourite_count": it.get("favourite_count"),
                 "seller": it.get("user", {}).get("login") if isinstance(it.get("user"), dict) else None,
+                "seller_member_since": (it.get("_profile") or {}).get("member_since")
+                    or (it.get("_profile") or {}).get("created_at"),
+                "seller_feedback_count": (it.get("_profile") or {}).get("feedback_count")
+                    or (it.get("_profile") or {}).get("feedback_reputation"),
+                "seller_item_count": (it.get("_profile") or {}).get("item_count"),
             }
             for it in items
         ],
@@ -192,6 +232,11 @@ def main() -> None:
         new_items = new_items[: config.get("max_new_items_per_run", 20)]
         if not new_items:
             continue
+ 
+        for item in new_items:
+            user = item.get("user")
+            user_id = user.get("id") if isinstance(user, dict) else None
+            item["_profile"] = get_seller_profile(scrapebadger_key, user_id, watch.get("market", "us"))
  
         scores = score_with_claude(client, watch, new_items)
         scores_by_id = {s["id"]: s for s in scores}
