@@ -26,7 +26,7 @@ from google.genai import types
 STATE_PATH = Path("data/seen_listings.json")
 CONFIG_PATH = Path("scripts/config.json")
 SCRAPEBADGER_BASE = "https://scrapebadger.com/v1"
-GEMINI_MODEL = "gemini-3.6-flash"  # check aistudio.google.com for the current recommended flash model name
+GEMINI_MODEL = "gemini-2.5-flash"  # check aistudio.google.com for the current recommended flash model name
  
  
 # ---------- state ----------
@@ -206,21 +206,23 @@ def main() -> None:
     scrapebadger_key = os.environ.get("SCRAPEBADGER_API_KEY", "")
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
     ntfy_topic = os.environ.get("NTFY_TOPIC", "")
-    missing = [
-        n for n, v in [
-            ("SCRAPEBADGER_API_KEY", scrapebadger_key),
-            ("GEMINI_API_KEY", gemini_key),
-            ("NTFY_TOPIC", ntfy_topic),
-        ] if not v
-    ]
+    test_mode = os.environ.get("SKIP_SCORING", "").strip().lower() in ("1", "true", "yes")
+ 
+    required = [("SCRAPEBADGER_API_KEY", scrapebadger_key), ("NTFY_TOPIC", ntfy_topic)]
+    if not test_mode:
+        required.append(("GEMINI_API_KEY", gemini_key))
+    missing = [n for n, v in required if not v]
     if missing:
         print(f"Missing required secrets: {', '.join(missing)}", file=sys.stderr)
         sys.exit(1)
  
+    if test_mode:
+        print("TEST MODE: skipping Gemini, fake-scoring every new listing as a pass", file=sys.stderr)
+ 
     config = load_config()
     state = load_state()
     seen = set(state["seen_ids"])
-    client = genai.Client(api_key=gemini_key)
+    client = None if test_mode else genai.Client(api_key=gemini_key)
  
     alerts_sent = 0
     for watch in config["watches"]:
@@ -240,7 +242,13 @@ def main() -> None:
             user_id = user.get("id") if isinstance(user, dict) else None
             item["_profile"] = get_seller_profile(scrapebadger_key, user_id, watch.get("market", "us"))
  
-        scores = score_with_gemini(client, watch, new_items)
+        if test_mode:
+            scores = [
+                {"id": item.get("id"), "deal_score": 10, "scam_risk": "low", "reason": "TEST MODE - scoring skipped"}
+                for item in new_items
+            ]
+        else:
+            scores = score_with_gemini(client, watch, new_items)
         scores_by_id = {s["id"]: s for s in scores}
  
         for item in new_items:
