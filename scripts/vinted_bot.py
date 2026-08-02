@@ -26,7 +26,7 @@ from google.genai import types
 STATE_PATH = Path("data/seen_listings.json")
 CONFIG_PATH = Path("scripts/config.json")
 SCRAPEBADGER_BASE = "https://scrapebadger.com/v1"
-GEMINI_MODEL = "gemini-2.5-flash"  # check aistudio.google.com for the current recommended flash model name
+GEMINI_MODEL = "gemini-3.6-flash"  # check aistudio.google.com for the current recommended flash model name
  
  
 # ---------- state ----------
