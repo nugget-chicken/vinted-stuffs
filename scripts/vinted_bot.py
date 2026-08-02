@@ -201,10 +201,26 @@ def score_with_gemini(client: "genai.Client", watch: dict, items: list) -> list:
  
 # ---------- ntfy ----------
  
+def _header_safe(text: str) -> str:
+    """HTTP headers are Latin-1 only. Listing titles often contain en dashes,
+    em dashes, or curly quotes that aren't — swap common ones for ASCII
+    equivalents, then drop anything else that still won't fit rather than
+    crashing the request."""
+    replacements = {
+        "\u2013": "-", "\u2014": "-",  # en dash, em dash
+        "\u2018": "'", "\u2019": "'",  # curly single quotes
+        "\u201c": '"', "\u201d": '"',  # curly double quotes
+        "\u2026": "...",  # ellipsis
+    }
+    for bad, good in replacements.items():
+        text = text.replace(bad, good)
+    return text.encode("latin-1", errors="ignore").decode("latin-1")
+ 
+ 
 def send_ntfy(topic: str, item: dict, score: dict) -> None:
     price = (item.get("price") or {}).get("amount", "?")
     currency = (item.get("price") or {}).get("currency_code", "")
-    title = f"{score['deal_score']}/10 deal: {item.get('title', '')[:60]}"
+    title = _header_safe(f"{score['deal_score']}/10 deal: {item.get('title', '')[:60]}")
     body = (
         f"{price} {currency} - {item.get('brand_title') or 'no brand'} "
         f"- scam risk: {score['scam_risk']}\n{score['reason']}"
@@ -215,7 +231,7 @@ def send_ntfy(topic: str, item: dict, score: dict) -> None:
     }
     url = item.get("url")
     if url:
-        headers["Click"] = url
+        headers["Click"] = _header_safe(url)
     req = urllib.request.Request(
         f"https://ntfy.sh/{topic}",
         data=body.encode("utf-8"),
