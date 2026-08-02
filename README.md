@@ -1,48 +1,46 @@
-vinted deal bot that kinda works
+vinted deal bot
 
-Watches Vinted for phones and consoles, has Gemini judge whether each listing is actually a good deal (and whether the seller looks sketchy), and pushes a notification when something clears the bar. Runs on a schedule via GitHub Actions, no server needed.
+Watches Vinted for phones and consoles, has Gemini judge deal quality and scam risk on anything new, and pushes an alert to your phone via ntfy when something's worth looking at. Runs on GitHub Actions, no server needed.
 
 how it works
-GitHub Actions kicks the script off every 5 minutes.
-For each search in scripts/config.json, it hits ScrapeBadger's Vinted search API and gets back listings under the price cap.
-Anything not already seen (tracked in data/seen_listings.json) gets a quick seller-profile lookup — how old the account is, feedback count, how many other items they've sold.
-All of that gets handed to Claude in one batch: score the deal quality 1-10, and flag scam risk based mostly on the seller history (a listing from a brand-new account with zero feedback is the biggest red flag).
-Anything that scores high enough and isn't flagged as risky gets pushed to your phone via ntfy. Everything gets marked as seen either way so it's not re-scored next run.
 
-The price cap in the config (price_to) is just a filter on what gets pulled from Vinted in the first place — it's not the deal bar. Claude decides whether $280 is actually good for that specific phone, not just whether it's under $300.
+Every 15 min: search each watch in config.json -> drop anything already seen -> pull each new seller's profile (account age, feedback) -> send it all to Gemini in one batch for a deal score (1-10) and scam risk -> alert on anything past the watch's min_deal_score that isn't high risk -> mark everything as seen either way so nothing gets rescored.
+
+price_to in the config is just a search filter, not the deal bar — Gemini decides if a price is actually good for that item, not just whether it's under the cap.
 
 files
 .github/workflows/vinted-bot.yml   the cron job
 scripts/vinted_bot.py              the bot
 scripts/config.json                what to search for
-scripts/requirements.txt           python deps
-data/seen_listings.json            dedup state
+scripts/requirements.txt           deps
+data/seen_listings.json            dedup state, committed back by the workflow
 setup
 
-You need three repo secrets (Settings → Secrets and variables → Actions):
+Three repo secrets (Settings -> Secrets and variables -> Actions):
 
 SCRAPEBADGER_API_KEY — from your ScrapeBadger dashboard
-GEMINI_API_KEY — from their api website (free version)
-NTFY_TOPIC — make one up, keep it long/random since anyone who knows the name can subscribe to your alerts. Subscribe to it yourself in the ntfy app so you actually get the pushes.
+GEMINI_API_KEY — from aistudio.google.com, free tier, no billing needed
+NTFY_TOPIC — make up a long/random name (anyone who knows it can subscribe to your alerts), then subscribe to it yourself in the ntfy app
 
-Also: Settings → Actions → General → Workflow permissions needs to be set to "Read and write" so the workflow can commit the updated dedup file back.
+Also set Settings -> Actions -> General -> Workflow permissions to "Read and write," or the workflow can't commit the dedup file back.
 
-Once secrets are set, push and trigger a manual run from the Actions tab to check everything's wired up before letting the cron take over.
+Push everything, then trigger a manual run from the Actions tab before letting the cron take over.
 
-editing what it searches for
+config.json
 
-Edit scripts/config.json. Each entry is one saved search:
+One entry per saved search:
 
 json
-{ "name": "ps5-under-300", "query": "ps5", "market": "us", "price_to": 300, "min_deal_score": 7 }
-query — required, whatever you'd type into Vinted's search bar
-market — vinted country code, us for the US site
-price_to — upper price filter
-min_deal_score — how good Claude has to rate it (1-10) before you get alerted. Raise it if you're getting flooded, lower it if you're not hearing anything.
+{ "name": "ps5-under-300", "query": "ps5", "market": "us", "price_from": 20, "price_to": 300, "min_deal_score": 7 }
 
-Add as many watches as you want, each one costs a little extra in ScrapeBadger credits per run.
+query is the only required field. min_deal_score is the actual alert threshold (1-10) — raise it if you're getting flooded, lower it if you're hearing nothing.
 
-known rough edges
-The seller-profile lookup (member-since date, feedback count) is based on an endpoint whose exact response format wasn't fully documented anywhere I could find — it's wrapped so a bad guess on field names won't crash the run, it'll just fall back to treating that seller's history as unknown. If it ever behaves oddly, check the Action log for a DEBUG first seller profile response line.
-ScrapeBadger charges per call — searches are cheap, profile lookups cost more, so the first run (when everything looks "new") costs more than steady state.
-Scam detection is only as good as what the API exposes. It can't read the actual listing description for red-flag phrases like "pay me outside the app," since the search endpoint doesn't return descriptions.
+test mode
+
+Actions tab -> Run workflow -> tick "Test mode." Runs the real search and dedup, skips Gemini, fake-passes every new listing so you can check ntfy delivery without a working Gemini key.
+
+known limits
+Scam detection leans on seller account age/feedback, not the listing description — the search API doesn't return descriptions, so it can't catch red-flag phrases like "pay outside the app."
+Seller-profile lookups (member-since date, feedback count) hit an under-documented ScrapeBadger endpoint. If it starts failing, the bot just treats that seller as unknown (elevated risk) rather than crashing — check the Action log for DEBUG first seller profile response or Seller profile lookup failed if it seems off.
+ScrapeBadger charges per call — searches are cheap, profile lookups cost more. The first run costs the most since everything looks "new."
+Requests back off automatically on rate limits (429s), with a small delay between each watch's search either way.
