@@ -47,7 +47,27 @@ def load_config() -> dict:
     return json.loads(CONFIG_PATH.read_text())
  
  
+import time
+ 
 # ---------- ScrapeBadger ----------
+ 
+def _get_with_retry(url: str, headers: dict, params: dict, timeout: int, max_retries: int = 4):
+    """GET with retry/backoff specifically for 429s. Raises on other errors."""
+    delay = 2
+    for attempt in range(max_retries + 1):
+        resp = requests.get(url, headers=headers, params=params, timeout=timeout)
+        if resp.status_code != 429:
+            resp.raise_for_status()
+            return resp
+        retry_after = resp.headers.get("Retry-After")
+        wait = float(retry_after) if retry_after else delay
+        if attempt == max_retries:
+            resp.raise_for_status()  # give up, raise the 429
+        print(f"429 rate limited, waiting {wait}s before retry ({attempt + 1}/{max_retries})", file=sys.stderr)
+        time.sleep(wait)
+        delay *= 2
+    raise RuntimeError("unreachable")
+ 
  
 def search_vinted(api_key: str, watch: dict) -> list:
     params = {
@@ -60,44 +80,52 @@ def search_vinted(api_key: str, watch: dict) -> list:
         if key in watch:
             params[key] = watch[key]
  
-    resp = requests.get(
+    resp = _get_with_retry(
         f"{SCRAPEBADGER_BASE}/vinted/search",
         headers={"x-api-key": api_key},
         params=params,
         timeout=20,
     )
-    resp.raise_for_status()
     return resp.json().get("items", [])
  
  
 _profile_debug_printed = False
+_profile_consecutive_failures = 0
+_profile_endpoint_disabled = False
  
  
 def get_seller_profile(api_key: str, user_id, market: str) -> dict:
     """Best-effort seller profile lookup for scam-risk signal (member-since,
     feedback count). Returns {} on any failure rather than raising, since
-    losing this enrichment shouldn't take down the whole run."""
-    global _profile_debug_printed
-    if not user_id:
+    losing this enrichment shouldn't take down the whole run. Disables
+    itself after repeated failures so a broken endpoint doesn't keep eating
+    into the rate limit budget that the actual searches need."""
+    global _profile_debug_printed, _profile_consecutive_failures, _profile_endpoint_disabled
+    if not user_id or _profile_endpoint_disabled:
         return {}
     try:
-        resp = requests.get(
+        resp = _get_with_retry(
             f"{SCRAPEBADGER_BASE}/vinted/user",
             headers={"x-api-key": api_key},
             params={"user_id": user_id, "market": market},
             timeout=15,
+            max_retries=1,  # don't burn retries on a lookup that's non-critical
         )
-        resp.raise_for_status()
         data = resp.json()
+        _profile_consecutive_failures = 0
         if not _profile_debug_printed:
             print("DEBUG first seller profile response:", file=sys.stderr)
             print(json.dumps(data, indent=2, ensure_ascii=False), file=sys.stderr)
             _profile_debug_printed = True
         return data
     except requests.RequestException as e:
+        _profile_consecutive_failures += 1
         if not _profile_debug_printed:
             print(f"Seller profile lookup failed (skipping enrichment): {e}", file=sys.stderr)
             _profile_debug_printed = True
+        if _profile_consecutive_failures >= 3:
+            _profile_endpoint_disabled = True
+            print("Seller profile endpoint failing consistently — disabling for the rest of this run.", file=sys.stderr)
         return {}
  
  
@@ -225,7 +253,9 @@ def main() -> None:
     client = None if test_mode else genai.Client(api_key=gemini_key)
  
     alerts_sent = 0
-    for watch in config["watches"]:
+    for i, watch in enumerate(config["watches"]):
+        if i > 0:
+            time.sleep(1.5)  # small pacing gap between watches to avoid bursting the rate limit
         try:
             items = search_vinted(scrapebadger_key, watch)
         except requests.RequestException as e:
