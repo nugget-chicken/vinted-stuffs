@@ -3,7 +3,12 @@ name: vinted-deal-bot
 on:
   schedule:
     - cron: "*/15 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      skip_scoring:
+        description: "Test mode: skip Gemini, fake-pass every new listing to check search/dedup/ntfy"
+        type: boolean
+        default: false
  
 concurrency:
   group: vinted-deal-bot
@@ -32,6 +37,7 @@ jobs:
           SCRAPEBADGER_API_KEY: ${{ secrets.SCRAPEBADGER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SKIP_SCORING: ${{ inputs.skip_scoring }}
         run: python scripts/vinted_bot.py
  
       - name: Commit updated state
@@ -45,3 +51,4 @@ jobs:
           else
             echo "No state changes to commit"
           fi
+ 
