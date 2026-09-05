@@ -128,6 +128,16 @@ def _normalize_item(raw: dict) -> dict:
         amount = price if price is not None else "?"
         currency = raw.get("currency") or ""
     seller = raw.get("seller") or raw.get("user") or {}
+    sid = None
+    login = None
+    if isinstance(seller, dict):
+        try:
+            sid = int(seller.get("id"))
+        except (TypeError, ValueError):
+            sid = None
+        if not sid or sid <= 0:
+            sid = None
+        login = seller.get("username") or seller.get("login")
     return {
         "id": raw.get("id"),
         "title": raw.get("title", ""),
@@ -138,8 +148,8 @@ def _normalize_item(raw: dict) -> dict:
         "favourite_count": raw.get("favouriteCount") or raw.get("favourite_count") or 0,
         "url": raw.get("url"),
         "user": {
-            "id": seller.get("id") if isinstance(seller, dict) else None,
-            "login": (seller.get("username") or seller.get("login")) if isinstance(seller, dict) else None,
+            "id": sid,
+            "login": login,
         },
     }
 
@@ -329,26 +339,74 @@ def get_seller_items(user_id, country: str, limit: int) -> list:
     return closets.get(str(user_id), [])
 
 
-def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, list]:
+def _closet_chunks(user_ids: list, chunk_size: int = 5) -> list[list[int]]:
     unique = []
     for uid in user_ids:
         if uid and uid not in unique:
             unique.append(int(uid))
-    if not unique:
-        return {}
-    data = _vinted_json(
-        ["batch"],
-        timeout=120,
-        stdin_payload={"closets": {"country": country, "ids": unique, "limit": limit}},
-    )
-    out = {}
-    for row in (data or {}).get("closets") or []:
-        sid = str(row.get("sellerId"))
-        if row.get("error"):
-            print(f"Closet crawl failed for seller {sid}: {row['error']}", file=sys.stderr)
+    if chunk_size < 1:
+        chunk_size = 1
+    return [unique[i:i + chunk_size] for i in range(0, len(unique), chunk_size)]
+
+
+def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, list]:
+    """Fetch closets in small CLI chunks — one huge batch times out on FULL_SWEEP."""
+    chunks = _closet_chunks(user_ids, chunk_size=5)
+    out: dict[str, list] = {}
+    for chunk in chunks:
+        # ~20–40s per closet under load; keep headroom without one giant timeout.
+        timeout = max(90, 35 * len(chunk))
+        try:
+            data = _vinted_json(
+                ["batch"],
+                timeout=timeout,
+                stdin_payload={
+                    "closets": {"country": country, "ids": chunk, "limit": limit},
+                },
+            )
+        except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
+            print(
+                f"Closet crawl chunk failed for {country} "
+                f"({len(chunk)} sellers): {e}",
+                file=sys.stderr,
+            )
             continue
-        out[sid] = [_normalize_item(it) for it in (row.get("items") or []) if it.get("id") is not None]
+        for row in (data or {}).get("closets") or []:
+            sid = str(row.get("sellerId"))
+            if row.get("error"):
+                print(f"Closet crawl failed for seller {sid}: {row['error']}", file=sys.stderr)
+                # Omit failed sellers so value-haul can skip them.
+                continue
+            out[sid] = [
+                _normalize_item(it)
+                for it in (row.get("items") or [])
+                if it.get("id") is not None
+            ]
     return out
+
+
+def select_closet_crawl_sellers(candidates: list, config: dict) -> list:
+    """Cap and rank closet crawl targets: keeps first, then higher scores."""
+    max_sellers = int(config.get("closet_crawl_max_sellers", 20))
+    ranked = sorted(
+        candidates,
+        key=lambda c: (
+            1 if c.get("is_keep") else 0,
+            _as_int_score((c.get("score") or {}).get("deal_score")),
+        ),
+        reverse=True,
+    )
+    seen = set()
+    picked = []
+    for c in ranked:
+        sid = c.get("sid")
+        if sid is None or sid in seen:
+            continue
+        seen.add(sid)
+        picked.append(c)
+        if len(picked) >= max_sellers:
+            break
+    return picked
  
  
 # ---------- scoring ----------
@@ -364,17 +422,25 @@ def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, li
 # as BYOK; a chatgpt.com subscription cannot.
  
 SCORING_PROMPT = """The buyer pays shipping and Vinted buyer fees on top of \
-the listing price. Therefore cheap individual items are usually NOT \
-outstanding deals. Do not give a high deal score merely because an item \
-costs little.
+the listing price. Cheap individual items are usually NOT outstanding deals. \
+Do not give a high deal score merely because an item costs little, nor merely \
+because a premium brand is discounted.
 
-Prefer listings where the ABSOLUTE saving versus buying an equivalent \
-high-quality item new is substantial. For ordinary clothing, a cheap \
-low-value item is normally a skip even if its percentage discount is large.
+The buyer does NOT want to accumulate lots of clothes. Only recommend \
+creme-de-la-creme deals: items that are unusually good in quality, fit, \
+condition and price, and that would be genuinely disappointing to miss. \
+A normal good deal is a skip. Prefer fewer, better items over quantity.
 
-You are screening second-hand Vinted listings for a buyer who only wants \
-outstanding price-quality. Most listings should fail. Return ONLY a JSON \
-array (no prose, no markdown fences) with one object per listing:
+For a 9+ alert, several of these should hold at once:
+- outstanding product (not merely a correct brand)
+- large ABSOLUTE saving vs buying an equivalent high-quality item new
+- very good / unused condition
+- correct size and a cut the buyer will realistically wear often
+- timeless or highly functional, not filler
+
+You are screening second-hand Vinted listings. Most listings should fail. \
+Return ONLY a JSON array (no prose, no markdown fences) with one object \
+per listing:
 
   {{"id": <item id>, "deal_score": <1-10>, "value_band": "steal"|"hunt"|"acceptable"|"skip", \
 "hunt_fit": <true|false>, "scam_risk": "low"|"medium"|"high", \
@@ -403,11 +469,11 @@ value_band is price vs quality for that exact piece:
 ordinary used-market price, not a keep
   skip — overpriced, wrong item, poor condition, or junk keyword match
 
-deal_score is the price-quality ratio after fees/shipping, not "is it under the cap":
-  9-10 steal on a true match with substantial absolute saving vs new
-  8 hunt-band true match, very good or unused
-  6-7 merely acceptable / cap-adjacent / cheap-but-low-value — not a keep
-  1-5 overpriced, wrong line, weak condition, or too cheap to be worth fees
+deal_score (after fees/shipping) — 9 means "would hate to miss", not "good price":
+  10 = exceptional steal; rare enough to buy immediately
+  9 = outstanding deal; unusually strong value and very desirable
+  8 = good deal, but not special enough for this buyer — not a keep
+  7 or below = skip (acceptable, cap-adjacent, cheap-but-low-value, wrong line, weak condition)
 
 scam_risk, in order of importance:
   1. Seller account age/history (member_since, feedback_count, item_count) — \
@@ -456,16 +522,14 @@ def _scoring_prompt(watch: dict, items: list) -> str:
     if "maternity" in target:
         maternity_rules = (
             "For maternity clothing, do not reward an item simply because it is cheap. "
-            "The buyer pays shipping and Vinted buyer fees and prefers fewer, higher-value purchases. "
-            "Give the highest scores to: premium maternity-specific construction; "
+            "The buyer wants crème-de-la-crème only — fewer, higher-value purchases. "
+            "Give 9–10 only when several hold: premium maternity-specific construction; "
             "dresses, trousers, knitwear, outerwear and substantial pieces; "
             "garments usable both during pregnancy and postpartum/nursing; "
-            "excellent or unused condition; unusually large savings versus original retail. "
-            "A 30-50 RON basic maternity T-shirt sold individually is normally not a deal "
-            "worth alerting, even if its percentage discount looks large. "
+            "excellent or unused condition; unusually large absolute savings versus retail. "
+            "A 30-50 RON basic maternity T-shirt sold individually is a skip. "
             "Size target is women's L-XL. M/L or XL/XXL may qualify only when the brand's "
-            "actual measurements clearly make it appropriate. Do not reject those adjacent "
-            "sizes rigidly when the cut would realistically fit."
+            "actual measurements clearly make it appropriate."
         )
     return SCORING_PROMPT.format(
         query=watch["query"],
@@ -513,12 +577,12 @@ def is_clothing_solo_bound(watch: dict) -> bool:
 
 
 def is_keep(score: dict, config: dict, watch: dict, item: dict | None = None) -> bool:
-    """True only for a true-fit, high price-quality listing that is not high-risk."""
+    """True only for a true-fit, crème-level listing that is not high-risk."""
     if watch.get("bundle_hunt"):
         return False
     if not score or score.get("scam_risk") == "high":
         return False
-    min_score = watch.get("min_deal_score", config.get("min_deal_score", 8))
+    min_score = watch.get("min_deal_score", config.get("min_deal_score", 9))
     if _as_int_score(score.get("deal_score")) < min_score:
         return False
     if config.get("require_hunt_fit", True) and score.get("hunt_fit") is not True:
@@ -528,12 +592,12 @@ def is_keep(score: dict, config: dict, watch: dict, item: dict | None = None) ->
     if band not in allowed:
         return False
     if item is not None and is_clothing_solo_bound(watch):
-        # Steal-band true matches stay keeps (e.g. Lululemon Vent Tech at 80 RON).
-        # The floor is only for ordinary hunt-band clothing where fees eat the save.
-        if (score.get("value_band") or "") != "steal":
+        # Steal-band always bypasses the solo floor (premium underpriced pieces).
+        # Floor (if > 0) only blocks ordinary hunt-band clothing where fees eat value.
+        if band != "steal":
             amount = listing_amount(item)
-            floor = float(config.get("solo_floor_clothing_ron", 100))
-            if amount is not None and amount <= floor:
+            floor = float(config.get("solo_floor_clothing_ron", 0))
+            if floor > 0 and amount is not None and amount <= floor:
                 return False
     return True
 
@@ -545,18 +609,43 @@ def is_bundle_extra(score: dict, config: dict) -> bool:
         return False
     if (score.get("value_band") or "skip") == "skip":
         return False
-    return _as_int_score(score.get("deal_score")) >= int(config.get("bundle_extra_min_score", 6))
+    return _as_int_score(score.get("deal_score")) >= int(config.get("bundle_extra_min_score", 7))
 
 
-def checkout_extra_ron(seller_country: str, config: dict) -> float:
-    table = config.get("checkout_extra_ron") or {}
+def checkout_extra_ron(
+    seller_country: str,
+    config: dict,
+    listing_sum: float | None = None,
+) -> float:
+    """Estimate one-checkout overhead (shipping + buyer fees).
+
+    Prefer checkout_fees (shipping + fixed + pct of listing sum) when present;
+    fall back to flat checkout_extra_ron by country.
+    """
     cc = (seller_country or "ro").lower()
+    fees_table = config.get("checkout_fees") or {}
+    row = fees_table.get(cc) or fees_table.get("default")
+    if row:
+        shipping = float(row.get("estimated_shipping_ron", 0))
+        fixed = float(row.get("buyer_fee_fixed_ron", 0))
+        pct = float(row.get("buyer_fee_pct", 0))
+        base = float(listing_sum or 0)
+        return shipping + fixed + base * pct
+    table = config.get("checkout_extra_ron") or {}
     return float(table.get(cc, table.get("default", 25)))
 
 
 def seller_id(item: dict):
+    """Vinted member id, or None when missing/unknown. Never treat 0 as a seller."""
     user = item.get("user") or {}
-    return user.get("id") if isinstance(user, dict) else None
+    if not isinstance(user, dict):
+        return None
+    raw = user.get("id")
+    try:
+        sid = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return sid if sid > 0 else None
 
 
 def matching_watches(item: dict, watches: list) -> list:
@@ -707,9 +796,13 @@ def apply_fresh_items(rows: list, fresh: dict) -> None:
         iid = str(row["item"].get("id"))
         if iid in fresh:
             keep_profile = row["item"].get("_profile")
+            keep_user = row["item"].get("user")
             row["item"] = fresh[iid]
             if keep_profile and not row["item"].get("_profile"):
                 row["item"]["_profile"] = keep_profile
+            # Availability payloads sometimes omit seller — don't wipe a known id.
+            if seller_id(row["item"]) is None and seller_id({"user": keep_user}) is not None:
+                row["item"]["user"] = keep_user
 
 
 def seed_pool_from_history(watches: list) -> list:
@@ -789,6 +882,8 @@ def assemble_bundles(scored: list, config: dict) -> tuple[list, list]:
                 continue
             seen_row_ids.add(rid)
             unique.append(row)
+        # Defend against corrupt pool rows that share a fake seller id.
+        unique = [r for r in unique if seller_id(r["item"]) == sid]
         keeps = [
             r for r in unique
             if is_keep(r["score"], config, r["watch_obj"], r["item"])
@@ -802,9 +897,9 @@ def assemble_bundles(scored: list, config: dict) -> tuple[list, list]:
                 (keeps[0]["item"].get("_profile") or {}).get("country_code")
                 or "ro"
             )
-            extra = checkout_extra_ron(country, config)
             members = keeps + extras
             listing_sum = sum(listing_amount(r["item"]) or 0 for r in members)
+            extra = checkout_extra_ron(country, config, listing_sum)
             bundles.append({
                 "seller_id": sid,
                 "seller": (keeps[0]["item"].get("user") or {}).get("login"),
@@ -1241,8 +1336,7 @@ def main() -> None:
     crawled_triggers = set(str(x) for x in state.get("crawled_trigger_ids", []))
     crawl_limit = int(config.get("closet_crawl_limit", 12))
     value_haul_crawl_limit = int(vh_cfg["closet_crawl_limit"])
-    crawl_requests: dict[str, dict] = {}
-    premium_crawl_seller_keys = set()
+    crawl_candidates = []
     for row in list(scored) + prior_rows:
         sid = seller_id(row["item"])
         if sid is None:
@@ -1252,34 +1346,52 @@ def main() -> None:
         trigger = str(row["item"].get("id"))
         if row in scored and trigger in crawled_triggers:
             continue
-        key = str(sid)
-        premium_crawl_seller_keys.add(key)
-        if key in crawl_requests:
-            continue
         if row in scored:
             crawled_triggers.add(trigger)
-        country = _country(row["watch_obj"])
-        crawl_requests[key] = {"sid": sid, "country": country, "limit": crawl_limit}
-    for key, meta in value_haul_sellers.items():
-        crawl_requests[key] = {
-            "sid": meta["sid"],
-            "country": meta["country"],
-            "limit": value_haul_crawl_limit,
-        }
+        crawl_candidates.append({
+            "sid": sid,
+            "country": _country(row["watch_obj"]),
+            "score": row.get("score") or {},
+            "is_keep": is_keep(
+                row.get("score") or {},
+                config,
+                row.get("watch_obj") or {},
+                row.get("item"),
+            ),
+        })
+    crawl_meta = select_closet_crawl_sellers(crawl_candidates, config)
+    if len(crawl_candidates) > len(crawl_meta):
+        print(
+            f"Closet crawl capped to {len(crawl_meta)}/"
+            f"{len({c['sid'] for c in crawl_candidates})} sellers "
+            f"(closet_crawl_max_sellers)",
+            file=sys.stderr,
+        )
+    premium_crawl_seller_keys = {str(meta["sid"]) for meta in crawl_meta}
     crawl_jobs: dict[tuple[str, int], list] = {}
-    for request in crawl_requests.values():
-        job_key = (request["country"], request["limit"])
-        crawl_jobs.setdefault(job_key, []).append(request["sid"])
+    for meta in crawl_meta:
+        crawl_jobs.setdefault((meta["country"], crawl_limit), []).append(meta["sid"])
+    for meta in value_haul_sellers.values():
+        crawl_jobs.setdefault(
+            (meta["country"], value_haul_crawl_limit),
+            [],
+        ).append(meta["sid"])
     closets_by_sid: dict[str, list] = {}
     for (country, limit), ids in crawl_jobs.items():
+        unique_ids = list(dict.fromkeys(ids))
+        print(
+            f"Closet crawl {country} limit={limit}: "
+            f"{len(unique_ids)} seller(s) in chunks of 5",
+            file=sys.stderr,
+        )
         try:
-            closets_by_sid.update(get_seller_closets(ids, country, limit))
+            closets_by_sid.update(get_seller_closets(unique_ids, country, limit))
         except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
             print(f"Closet crawl batch failed for {country}: {e}", file=sys.stderr)
-    for request in crawl_requests.values():
-        if str(request["sid"]) not in premium_crawl_seller_keys:
+    for meta in crawl_meta:
+        if str(meta["sid"]) not in premium_crawl_seller_keys:
             continue
-        closet = closets_by_sid.get(str(request["sid"]), [])
+        closet = closets_by_sid.get(str(meta["sid"]), [])
         by_watch: dict[str, list] = {}
         for raw in closet:
             if str(raw.get("id")) in scored_ids:
@@ -1325,7 +1437,8 @@ def main() -> None:
             ),
             meta["country"],
         )
-        extra = checkout_extra_ron(seller_country, config)
+        listing_sum_gate = sum(listing_amount(item) or 0 for item in candidates)
+        extra = checkout_extra_ron(seller_country, config, listing_sum_gate)
         rough = vh.rough_delivered_per_item(candidates, extra)
         if not vh.passes_value_haul_gate(len(candidates), rough, vh_cfg):
             continue
@@ -1489,6 +1602,8 @@ def main() -> None:
                         "url": r["item"].get("url"),
                         "watch": r["watch"],
                         "deal_score": r["score"].get("deal_score"),
+                        "seller_id": seller_id(r["item"]),
+                        "seller": (r["item"].get("user") or {}).get("login"),
                     }
                     for r in bundle["keeps"] + bundle["extras"]
                 ],
