@@ -17,7 +17,32 @@
     "pl": 40,
     "default": 25
   },
+  "value_haul": {
+    "min_items": 3,
+    "min_items_steal": 2,
+    "steal_max_delivered_per_item_ron": 20,
+    "strong_max_delivered_per_item_ron": 30,
+    "excellent_max_delivered_per_item_ron": 25,
+    "closet_crawl_limit": 36,
+    "min_deal_score": 8,
+    "keep_value_bands": ["steal", "hunt"],
+    "max_candidates_to_score": 12,
+    "max_value_hauls_per_run": 3
+  },
   "watches": [
+    {
+      "name": "Gym bundle seeds M-L",
+      "query": "sport",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": ["M", "L"],
+      "notes": "Individual item value can be modest. Looking for sellers with several useful men's gym pieces in M/L. H&M Sport/Move, Craft, Nike, Adidas, Under Armour, Puma, Reebok, Decathlon technical lines and similar are acceptable if several good-condition pieces can be bundled cheaply."
+    },
     {
       "name": "Lululemon gym M-L",
       "query": "lululemon",
