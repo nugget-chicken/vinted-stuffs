@@ -1,45 +1,51 @@
 name: vinted-deal-bot
- 
+
 on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       skip_scoring:
-        description: "Test mode: skip Gemini, fake-pass every new listing to check search/dedup/ntfy"
+        description: "Test mode: skip LLM scoring, fake-pass every new listing to check search/dedup/ntfy"
         type: boolean
         default: false
- 
+
 concurrency:
   group: vinted-deal-bot
   cancel-in-progress: false
- 
+
 permissions:
   contents: write
- 
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
- 
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
- 
-      - name: Install dependencies
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Python dependencies
         run: pip install -r scripts/requirements.txt
- 
+
       - name: Run bot
         env:
-          SCRAPEBADGER_API_KEY: ${{ secrets.SCRAPEBADGER_API_KEY }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+          AI_GATEWAY_MODEL: ${{ vars.AI_GATEWAY_MODEL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           SKIP_SCORING: ${{ inputs.skip_scoring }}
         run: python scripts/vinted_bot.py
- 
+
       - name: Commit updated state
         run: |
           git config user.name "vinted-bot"
@@ -51,4 +57,3 @@ jobs:
           else
             echo "No state changes to commit"
           fi
- 
