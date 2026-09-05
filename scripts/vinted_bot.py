@@ -979,8 +979,31 @@ def send_ntfy_bundle(topic: str, bundle: dict) -> None:
     if bundle.get("seller_id"):
         profile = f"https://www.vinted.ro/member/{bundle['seller_id']}"
     _ntfy_post(topic, title, "\n".join(lines), profile, "high")
- 
- 
+
+
+def send_ntfy_value_haul(topic: str, haul: dict, score: dict, useful: list) -> None:
+    n = len(useful)
+    seller = haul.get("seller") or haul.get("seller_id")
+    per = score.get("effective_price_per_useful_item")
+    total = haul.get("checkout_total")
+    if per is not None and total is not None:
+        title = _header_safe(
+            f"value haul {n} @ {seller}: ~{per} RON/item ({total:.0f} total)"
+        )
+    else:
+        title = _header_safe(f"value haul {n} @ {seller}")
+    lines = [
+        score.get("reason") or "",
+        f"{haul.get('listing_sum', 0):.0f} + {haul.get('checkout_extra_ron', 0):.0f} = {haul.get('checkout_total', 0):.0f} RON",
+    ]
+    for it in useful:
+        lines.append(f"- {it.get('title')} ({listing_amount(it)} RON)")
+    profile = None
+    if haul.get("seller_id"):
+        profile = f"https://www.vinted.ro/member/{haul['seller_id']}"
+    _ntfy_post(topic, title, "\n".join(lines), profile, "high")
+
+
 # ---------- main ----------
  
 def main() -> None:

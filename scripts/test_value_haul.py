@@ -70,6 +70,14 @@ class PrefilterTests(unittest.TestCase):
         self.assertNotIn(4, ids)
 
 
+class FingerprintTests(unittest.TestCase):
+    def test_fingerprint_sorted_useful_only(self):
+        items = [item(3, "c"), item(1, "a"), item(2, "b")]
+        score = {"reject_ids": [2]}
+        useful = vh.useful_items(items, score)
+        self.assertEqual(vh.value_haul_fingerprint(99, useful), "99:1,3")
+
+
 class PayloadAndAlertTests(unittest.TestCase):
     def test_payload_totals(self):
         items = [

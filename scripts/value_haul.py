@@ -239,3 +239,40 @@ def is_value_haul_alert(score: dict, useful: list, checkout_extra: float, vh: di
     except (TypeError, ValueError):
         per_f = rough_delivered_per_item(useful, checkout_extra)
     return passes_value_haul_gate(n, per_f, vh)
+
+
+def value_haul_fingerprint(seller_id, useful_items: list) -> str:
+    ids = sorted(str(it.get("id")) for it in useful_items)
+    return f"{seller_id}:" + ",".join(ids)
+
+
+def value_haul_record(haul: dict, score: dict, useful: list, watch_name: str, kept_at: str) -> dict:
+    listing_sum = sum(_listing_amount(it) or 0 for it in useful)
+    extra = float(haul.get("checkout_extra_ron") or 0)
+    return {
+        "kept_at": kept_at,
+        "kind": "value_haul",
+        "seller": haul.get("seller"),
+        "seller_id": haul.get("seller_id"),
+        "country": haul.get("country"),
+        "checkout_extra_ron": extra,
+        "listing_sum": listing_sum,
+        "checkout_total": listing_sum + extra,
+        "deal_score": score.get("deal_score"),
+        "value_band": score.get("value_band"),
+        "reason": score.get("reason"),
+        "watch": watch_name,
+        "effective_price_per_useful_item": score.get("effective_price_per_useful_item"),
+        "items": [
+            {
+                "role": "haul",
+                "id": it.get("id"),
+                "title": it.get("title"),
+                "price": _listing_amount(it),
+                "url": it.get("url"),
+                "watch": watch_name,
+                "deal_score": score.get("deal_score"),
+            }
+            for it in useful
+        ],
+    }
