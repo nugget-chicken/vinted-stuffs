@@ -896,6 +896,75 @@ def score_listings(watch: dict, items: list, gateway_key: str, gemini_client) ->
             print(errors[-1], file=sys.stderr)
     print("All scorers failed: " + "; ".join(errors or ["no scorer configured"]), file=sys.stderr)
     return []
+
+
+def score_value_haul(payload: dict, config: dict, gateway_key: str, gemini_client) -> dict | None:
+    import value_haul as vh
+
+    vh_cfg = vh.value_haul_config(config)
+    prompt = vh.value_haul_prompt(payload, vh_cfg) + "\nReturn a JSON object (not an array)."
+    errors = []
+    if gateway_key:
+        try:
+            resp = requests.post(
+                f"{VERCEL_GATEWAY_BASE}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {gateway_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": AI_GATEWAY_MODEL,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=60,
+            )
+            resp.raise_for_status()
+            content = (
+                ((resp.json().get("choices") or [{}])[0].get("message") or {}).get("content")
+                or ""
+            )
+            score = vh.parse_value_haul_score(content)
+            if score:
+                print(
+                    f"Scored value haul via Vercel AI Gateway ({AI_GATEWAY_MODEL})",
+                    file=sys.stderr,
+                )
+                return score
+            errors.append("AI Gateway returned no parseable value-haul score")
+        except requests.RequestException as e:
+            errors.append(f"AI Gateway failed: {e}")
+            print(errors[-1], file=sys.stderr)
+    if gemini_client is not None:
+        try:
+            response = gemini_client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json"),
+            )
+            score = vh.parse_value_haul_score(response.text or "")
+            if score:
+                print(f"Scored value haul via Gemini ({GEMINI_MODEL})", file=sys.stderr)
+                return score
+            errors.append("Gemini returned no parseable value-haul score")
+        except Exception as e:
+            errors.append(f"Gemini failed: {e}")
+            print(errors[-1], file=sys.stderr)
+    print(
+        "All value-haul scorers failed: " + "; ".join(errors or ["no scorer configured"]),
+        file=sys.stderr,
+    )
+    return None
+
+
+def is_mens_gym_watch(watch: dict) -> bool:
+    target = (watch.get("target_type") or "").lower()
+    if any(token in target for token in ("maternity", "sneaker", "knit", "cashmere")):
+        return False
+    return any(
+        token in target
+        for token in ("gym", "training", "sport", "running", "compression")
+    )
  
  
 # ---------- ntfy ----------
@@ -1042,6 +1111,9 @@ def main() -> None:
     scored = []
     scored_ids = set()
     watches = config["watches"]
+    bundle_hunts = [watch for watch in watches if watch.get("bundle_hunt")]
+    premium = [watch for watch in watches if not watch.get("bundle_hunt")]
+    value_haul_seeds = []
     prior_rows = load_bundle_pool(watches)
     if not prior_rows:
         try:
@@ -1109,16 +1181,62 @@ def main() -> None:
         ]
         if not full_sweep:
             new_items = new_items[: _max_new_items_per_watch(config)]
+        if watch in bundle_hunts:
+            for item in new_items:
+                mark_seen(state, item.get("id"), watch["name"])
+                sid = seller_id(item)
+                if sid is None:
+                    continue
+                value_haul_seeds.append({
+                    "sid": sid,
+                    "country": _country(watch),
+                    "watch": watch,
+                    "trigger_item": item,
+                })
+            print(
+                f"Hunt '{watch['name']}': {len(items)} listed, "
+                f"{len(new_items)} seeds (no solo score)",
+                file=sys.stderr,
+            )
+            continue
         print(
             f"Hunt '{watch['name']}': {len(items)} listed, {len(new_items)} unseen to score",
             file=sys.stderr,
         )
         score_batch(watch, new_items)
 
+    import value_haul as vh
+
+    vh_cfg = vh.value_haul_config(config)
+    value_haul_sellers: dict[str, dict] = {}
+    for seed in value_haul_seeds:
+        key = str(seed["sid"])
+        meta = value_haul_sellers.setdefault(key, {
+            "sid": seed["sid"],
+            "country": seed["country"],
+            "watch": seed["watch"],
+            "trigger_items": [],
+        })
+        meta["trigger_items"].append(seed["trigger_item"])
+    for row in scored:
+        if row["score"].get("hunt_fit") is not True or not is_mens_gym_watch(row["watch_obj"]):
+            continue
+        sid = seller_id(row["item"])
+        if sid is None:
+            continue
+        key = str(sid)
+        meta = value_haul_sellers.setdefault(key, {
+            "sid": sid,
+            "country": _country(row["watch_obj"]),
+            "watch": row["watch_obj"],
+            "trigger_items": [],
+        })
+        meta["trigger_items"].append(row["item"])
+
     crawled_triggers = set(str(x) for x in state.get("crawled_trigger_ids", []))
     crawl_limit = int(config.get("closet_crawl_limit", 12))
-    crawl_jobs: dict[str, list] = {}
-    crawl_meta = []
+    value_haul_crawl_limit = int(vh_cfg["closet_crawl_limit"])
+    crawl_requests: dict[str, dict] = {}
     for row in list(scored) + prior_rows:
         sid = seller_id(row["item"])
         if sid is None:
@@ -1128,26 +1246,36 @@ def main() -> None:
         trigger = str(row["item"].get("id"))
         if row in scored and trigger in crawled_triggers:
             continue
-        if any(m["sid"] == sid for m in crawl_meta):
+        key = str(sid)
+        if key in crawl_requests:
             continue
         if row in scored:
             crawled_triggers.add(trigger)
         country = _country(row["watch_obj"])
-        crawl_jobs.setdefault(country, []).append(sid)
-        crawl_meta.append({"sid": sid, "country": country})
+        crawl_requests[key] = {"sid": sid, "country": country, "limit": crawl_limit}
+    for key, meta in value_haul_sellers.items():
+        crawl_requests[key] = {
+            "sid": meta["sid"],
+            "country": meta["country"],
+            "limit": value_haul_crawl_limit,
+        }
+    crawl_jobs: dict[tuple[str, int], list] = {}
+    for request in crawl_requests.values():
+        job_key = (request["country"], request["limit"])
+        crawl_jobs.setdefault(job_key, []).append(request["sid"])
     closets_by_sid: dict[str, list] = {}
-    for country, ids in crawl_jobs.items():
+    for (country, limit), ids in crawl_jobs.items():
         try:
-            closets_by_sid.update(get_seller_closets(ids, country, crawl_limit))
+            closets_by_sid.update(get_seller_closets(ids, country, limit))
         except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
             print(f"Closet crawl batch failed for {country}: {e}", file=sys.stderr)
-    for meta in crawl_meta:
-        closet = closets_by_sid.get(str(meta["sid"]), [])
+    for request in crawl_requests.values():
+        closet = closets_by_sid.get(str(request["sid"]), [])
         by_watch: dict[str, list] = {}
         for raw in closet:
             if str(raw.get("id")) in scored_ids:
                 continue
-            matches = matching_watches(raw, watches)
+            matches = matching_watches(raw, premium)
             if not matches:
                 continue
             watch = matches[0]
@@ -1159,6 +1287,73 @@ def main() -> None:
             if batch:
                 score_batch(watch, batch)
     state["crawled_trigger_ids"] = list(crawled_triggers)
+
+    alerted_bundles = set(str(x) for x in state.get("alerted_bundle_keys", []))
+    value_hauls = []
+    value_haul_limit = int(vh_cfg["max_value_hauls_per_run"])
+    for meta in value_haul_sellers.values():
+        if len(value_hauls) >= value_haul_limit:
+            break
+        combined = closets_by_sid.get(str(meta["sid"]), []) + meta["trigger_items"]
+        unique_items = {}
+        for item in combined:
+            if item.get("id") is not None:
+                unique_items[str(item["id"])] = item
+        candidates = vh.prefilter_candidates(list(unique_items.values()), meta["watch"], config)
+        extra = checkout_extra_ron(meta["country"], config)
+        rough = vh.rough_delivered_per_item(candidates, extra)
+        if not vh.passes_value_haul_gate(len(candidates), rough, vh_cfg):
+            continue
+        first_item = meta["trigger_items"][0] if meta["trigger_items"] else candidates[0]
+        user = first_item.get("user") or {}
+        seller = user.get("login") if isinstance(user, dict) else None
+        payload = vh.build_haul_payload(
+            seller,
+            meta["country"],
+            extra,
+            candidates,
+            meta["watch"],
+        )
+        if test_mode:
+            score = {
+                "deal_score": 9,
+                "value_band": "steal",
+                "useful_item_count": len(candidates),
+                "effective_price_per_useful_item": rough,
+                "hunt_fit": True,
+                "scam_risk": "low",
+                "reason": "TEST MODE value haul",
+                "reject_ids": [],
+            }
+        else:
+            score = score_value_haul(payload, config, gateway_key, gemini_client)
+        if not score:
+            continue
+        useful = vh.useful_items(candidates, score)
+        if not vh.is_value_haul_alert(score, useful, extra, vh_cfg):
+            continue
+        fingerprint = vh.value_haul_fingerprint(meta["sid"], useful)
+        if fingerprint in alerted_bundles:
+            continue
+        listing_sum = sum(listing_amount(item) or 0 for item in useful)
+        haul = dict(payload)
+        haul.update({
+            "seller": seller,
+            "seller_id": meta["sid"],
+            "country": meta["country"],
+            "checkout_extra_ron": extra,
+            "listing_sum": listing_sum,
+            "checkout_total": listing_sum + extra,
+        })
+        alerted_bundles.add(fingerprint)
+        value_hauls.append({
+            "haul": haul,
+            "score": score,
+            "useful": useful,
+            "watch_name": meta["watch"]["name"],
+        })
+        send_ntfy_value_haul(ntfy_topic, haul, score, useful)
+        alerts_sent += 1
 
     this_run_ids = set(scored_ids)
     closet_live = {
@@ -1198,7 +1393,6 @@ def main() -> None:
     merged = merge_scored(scored, still_prior)
     bundles, solos = assemble_bundles(merged, config)
     bundles = bundles[: int(config.get("max_bundles_per_run", 3))]
-    alerted_bundles = set(str(x) for x in state.get("alerted_bundle_keys", []))
     new_bundles = []
     for bundle in bundles:
         key = bundle_fingerprint(bundle)
@@ -1253,6 +1447,7 @@ def main() -> None:
             0,
             {
                 "kept_at": now,
+                "kind": "keep_bundle",
                 "seller": bundle.get("seller"),
                 "seller_id": bundle["seller_id"],
                 "country": bundle.get("country"),
@@ -1272,6 +1467,17 @@ def main() -> None:
                     for r in bundle["keeps"] + bundle["extras"]
                 ],
             },
+        )
+    for result in value_hauls:
+        bundle_rows.insert(
+            0,
+            vh.value_haul_record(
+                result["haul"],
+                result["score"],
+                result["useful"],
+                result["watch_name"],
+                now,
+            ),
         )
     save_bundles(bundle_rows)
 
@@ -1293,6 +1499,7 @@ def main() -> None:
         "scored": len(scored),
         "solo_keeps": len(keeps),
         "bundles": len(bundles),
+        "value_hauls": len(value_hauls),
         "alerts": alerts_sent,
         "score_histogram": histogram,
         "top": [
@@ -1320,10 +1527,11 @@ def main() -> None:
     state["last_alerts_sent"] = alerts_sent
     state["last_candidates"] = len(solos)
     state["last_bundles"] = len(bundles)
+    state["last_value_hauls"] = len(value_hauls)
     save_state(state)
     print(
         f"Run complete. {len(solos)} solo keep(s), {len(bundles)} bundle(s), "
-        f"{alerts_sent} alert(s) sent.",
+        f"{len(value_hauls)} value haul(s), {alerts_sent} alert(s) sent.",
         file=sys.stderr,
     )
     print(f"Run complete. {alerts_sent} alert(s) sent.")
