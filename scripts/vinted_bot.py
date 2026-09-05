@@ -346,7 +346,6 @@ def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, li
         sid = str(row.get("sellerId"))
         if row.get("error"):
             print(f"Closet crawl failed for seller {sid}: {row['error']}", file=sys.stderr)
-            out[sid] = []
             continue
         out[sid] = [_normalize_item(it) for it in (row.get("items") or []) if it.get("id") is not None]
     return out
@@ -677,6 +676,12 @@ def merge_scored(current: list, previous: list) -> list:
 def bundle_fingerprint(bundle: dict) -> str:
     ids = sorted(str(r["item"].get("id")) for r in bundle["keeps"] + bundle["extras"])
     return f"{bundle['seller_id']}:" + ",".join(ids)
+
+
+def add_alerted_bundle_key(ordered: list[str], membership: set[str], key: str) -> None:
+    if key not in membership:
+        ordered.append(key)
+        membership.add(key)
 
 
 def check_items_available(specs: list) -> tuple[set, dict]:
@@ -1288,13 +1293,19 @@ def main() -> None:
                 score_batch(watch, batch)
     state["crawled_trigger_ids"] = list(crawled_triggers)
 
-    alerted_bundles = set(str(x) for x in state.get("alerted_bundle_keys", []))
+    alerted_bundle_keys = [
+        str(key) for key in state.get("alerted_bundle_keys", [])
+    ]
+    alerted_bundles = set(alerted_bundle_keys)
     value_hauls = []
     value_haul_limit = int(vh_cfg["max_value_hauls_per_run"])
     for meta in value_haul_sellers.values():
         if len(value_hauls) >= value_haul_limit:
             break
-        combined = closets_by_sid.get(str(meta["sid"]), []) + meta["trigger_items"]
+        sid_key = str(meta["sid"])
+        if sid_key not in closets_by_sid:
+            continue
+        combined = closets_by_sid[sid_key] + meta["trigger_items"]
         unique_items = {}
         for item in combined:
             if item.get("id") is not None:
@@ -1345,7 +1356,7 @@ def main() -> None:
             "listing_sum": listing_sum,
             "checkout_total": listing_sum + extra,
         })
-        alerted_bundles.add(fingerprint)
+        add_alerted_bundle_key(alerted_bundle_keys, alerted_bundles, fingerprint)
         value_hauls.append({
             "haul": haul,
             "score": score,
@@ -1399,8 +1410,8 @@ def main() -> None:
         if key in alerted_bundles:
             continue
         new_bundles.append(bundle)
-        alerted_bundles.add(key)
-    state["alerted_bundle_keys"] = list(alerted_bundles)[-200:]
+        add_alerted_bundle_key(alerted_bundle_keys, alerted_bundles, key)
+    state["alerted_bundle_keys"] = alerted_bundle_keys[-200:]
     # Re-alert only this-run solos; prior keeps already went out as ntfy.
     this_run_solos = [r for r in solos if str(r["item"].get("id")) in this_run_ids]
     keeps = select_best(this_run_solos, config)
