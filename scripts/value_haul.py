@@ -9,7 +9,7 @@ GYM_TOKENS = (
     "sport", "training", "gym", "running", "workout", "fitness",
     "nike", "adidas", "lululemon", "under armour", "underarmour",
     "puma", "reebok", "craft", "decathlon", "h&m", "hm move", "hm sport",
-    "ten thousand", "compression", "dry-fit", "dri-fit", "tech tee",
+    "ten thousand", "hummel", "domyos", "compression", "dry-fit", "dri-fit", "tech tee",
 )
 
 GYM_GARMENTS = (

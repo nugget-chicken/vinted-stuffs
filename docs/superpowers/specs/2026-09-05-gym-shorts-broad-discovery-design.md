@@ -50,7 +50,7 @@ Three channels, all config-driven; existing bot / value-haul code paths:
 ### Shared filters
 
 - Country: `ro`
-- Men’s clothing sizes M/L: `size_ids: [1739, 1740]` (size group “Mărime” S/M/L)
+- Men’s clothing sizes M/L: `size_ids: [208, 209]` (size group 14 “Mărimi bărbați”)
 - Also keep `target_sizes: ["M", "L"]` for LLM / value-haul text matching
 - No `category_id` in v1
 
@@ -68,7 +68,7 @@ Three channels, all config-driven; existing bot / value-haul code paths:
 
 ### Bundle seeds (replace single “Gym bundle seeds M-L”)
 
-Each with `bundle_hunt: true`, `per_page: 50`, `price_to: 80`, `hunt_price: 50`, `target_sizes` M/L, `size_ids` [1739, 1740] where useful:
+Each with `bundle_hunt: true`, `per_page: 50`, `price_to: 80`, `hunt_price: 50`, `target_sizes` M/L, `size_ids` [208, 209] where useful:
 
 | name | query |
 |---|---|
@@ -106,6 +106,8 @@ VINTED_CONFIG=scripts/config.gym-shorts-sweep.json FULL_SWEEP=1 uv run python sc
 Then resume normal `config.json` runs. Dedup uses per-hunt `seen_keys`, so later runs only score unseen listings for those hunt names.
 
 ## Limits and trade-offs
+
+- Task 4 one-time `FULL_SWEEP` remains deferred until after the correct men’s size IDs land and any concurrent backfill job finishes.
 
 - Everyday runs still cap at 15 new items per watch (global). Full coverage is the **sweep**, not every cron tick.
 - Sweep scores every unseen listing from paginated search (`full_sweep_max` default 400 per watch in bot). Expect higher LLM cost once.

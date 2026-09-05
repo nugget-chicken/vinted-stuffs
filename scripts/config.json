@@ -54,8 +54,8 @@
     ],
     "max_candidates_to_score": 12,
     "max_value_hauls_per_run": 15,
-    "max_closet_sellers": 40,
-    "max_seeds_per_watch": 25,
+    "max_closet_sellers": 120,
+    "max_seeds_per_watch": 15,
     "max_candidate_price_ron": 40,
     "max_near_hauls_per_run": 25,
     "max_opportunity_bundles": 80,
@@ -70,9 +70,15 @@
       "per_page": 50,
       "price_to": 120,
       "hunt_price": 70,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym or training shorts",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
     },
     {
@@ -83,9 +89,15 @@
       "per_page": 50,
       "price_to": 120,
       "hunt_price": 70,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym or training shorts",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
     },
     {
@@ -96,9 +108,15 @@
       "per_page": 50,
       "price_to": 120,
       "hunt_price": 70,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym or training shorts",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
     },
     {
@@ -109,9 +127,15 @@
       "per_page": 50,
       "price_to": 120,
       "hunt_price": 70,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym or training shorts",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
     },
     {
@@ -123,9 +147,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
@@ -137,9 +167,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
@@ -151,9 +187,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
@@ -165,9 +207,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
@@ -179,9 +227,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
@@ -193,9 +247,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
@@ -207,9 +267,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
@@ -221,9 +287,15 @@
       "price_to": 80,
       "hunt_price": 50,
       "bundle_hunt": true,
-      "size_ids": [1739, 1740],
+      "size_ids": [
+        208,
+        209
+      ],
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
     },
     {
