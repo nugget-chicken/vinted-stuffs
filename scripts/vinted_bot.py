@@ -1062,7 +1062,7 @@ def send_ntfy_value_haul(topic: str, haul: dict, score: dict, useful: list) -> N
     total = haul.get("checkout_total")
     if per is not None and total is not None:
         title = _header_safe(
-            f"value haul {n} @ {seller}: ~{per} RON/item ({total:.0f} total)"
+            f"value haul {n} @ {seller}: ~{float(per):.0f} RON/item ({total:.0f} total)"
         )
     else:
         title = _header_safe(f"value haul {n} @ {seller}")
@@ -1242,6 +1242,7 @@ def main() -> None:
     crawl_limit = int(config.get("closet_crawl_limit", 12))
     value_haul_crawl_limit = int(vh_cfg["closet_crawl_limit"])
     crawl_requests: dict[str, dict] = {}
+    premium_crawl_seller_keys = set()
     for row in list(scored) + prior_rows:
         sid = seller_id(row["item"])
         if sid is None:
@@ -1252,6 +1253,7 @@ def main() -> None:
         if row in scored and trigger in crawled_triggers:
             continue
         key = str(sid)
+        premium_crawl_seller_keys.add(key)
         if key in crawl_requests:
             continue
         if row in scored:
@@ -1275,6 +1277,8 @@ def main() -> None:
         except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
             print(f"Closet crawl batch failed for {country}: {e}", file=sys.stderr)
     for request in crawl_requests.values():
+        if str(request["sid"]) not in premium_crawl_seller_keys:
+            continue
         closet = closets_by_sid.get(str(request["sid"]), [])
         by_watch: dict[str, list] = {}
         for raw in closet:
@@ -1299,8 +1303,9 @@ def main() -> None:
     alerted_bundles = set(alerted_bundle_keys)
     value_hauls = []
     value_haul_limit = int(vh_cfg["max_value_hauls_per_run"])
+    value_haul_score_attempts = 0
     for meta in value_haul_sellers.values():
-        if len(value_hauls) >= value_haul_limit:
+        if value_haul_score_attempts >= value_haul_limit:
             break
         sid_key = str(meta["sid"])
         if sid_key not in closets_by_sid:
@@ -1311,7 +1316,16 @@ def main() -> None:
             if item.get("id") is not None:
                 unique_items[str(item["id"])] = item
         candidates = vh.prefilter_candidates(list(unique_items.values()), meta["watch"], config)
-        extra = checkout_extra_ron(meta["country"], config)
+        attach_seller_profiles(candidates, meta["country"])
+        seller_country = next(
+            (
+                (candidate.get("_profile") or {}).get("country_code")
+                for candidate in candidates
+                if (candidate.get("_profile") or {}).get("country_code")
+            ),
+            meta["country"],
+        )
+        extra = checkout_extra_ron(seller_country, config)
         rough = vh.rough_delivered_per_item(candidates, extra)
         if not vh.passes_value_haul_gate(len(candidates), rough, vh_cfg):
             continue
@@ -1320,11 +1334,12 @@ def main() -> None:
         seller = user.get("login") if isinstance(user, dict) else None
         payload = vh.build_haul_payload(
             seller,
-            meta["country"],
+            seller_country,
             extra,
             candidates,
             meta["watch"],
         )
+        value_haul_score_attempts += 1
         if test_mode:
             score = {
                 "deal_score": 9,
@@ -1351,7 +1366,7 @@ def main() -> None:
         haul.update({
             "seller": seller,
             "seller_id": meta["sid"],
-            "country": meta["country"],
+            "country": seller_country,
             "checkout_extra_ron": extra,
             "listing_sum": listing_sum,
             "checkout_total": listing_sum + extra,

@@ -44,8 +44,16 @@ class PrefilterTests(unittest.TestCase):
     def test_size_m_slash_l_matches(self):
         self.assertTrue(vh.size_matches(item(1, "tee", size="M/L"), ["M", "L"]))
 
+    def test_size_xl_does_not_match_l(self):
+        self.assertFalse(vh.size_matches(item(1, "tee", size="XL"), ["M", "L"]))
+
     def test_wrong_size_rejected(self):
         self.assertFalse(vh.size_matches(item(1, "tee", size="S"), ["M", "L"]))
+
+    def test_title_letters_do_not_override_size(self):
+        self.assertFalse(
+            vh.size_matches(item(1, "Gym training top", size="S"), ["M", "L"])
+        )
 
     def test_gym_title_accepted(self):
         self.assertTrue(vh.looks_like_gymwear(item(1, "H&M Sport póló"), WATCH))

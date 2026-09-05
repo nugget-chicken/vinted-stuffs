@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 GYM_TOKENS = (
     "sport", "training", "gym", "running", "workout", "fitness",
@@ -41,24 +42,12 @@ def _listing_amount(item: dict):
 def size_matches(item: dict, target_sizes: list[str]) -> bool:
     if not target_sizes:
         return True
-    raw = f"{item.get('size_title') or ''} {item.get('title') or ''}".upper()
-    targets = [t.upper() for t in target_sizes]
-    for t in targets:
-        if t in raw.replace(" ", ""):
-            return True
-        # token-ish: " M ", "M/", "/M", "M-L"
-        for sep in (" ", "/", "-", ","):
-            if f"{sep}{t}{sep}" in f" {raw.replace('-', '/')} ":
-                return True
-            if raw.startswith(t + sep) or raw.endswith(sep + t):
-                return True
-    # ambiguous M/L style already covered by membership of either letter
-    compact = raw.replace(" ", "")
-    if "/" in compact or "-" in compact:
-        parts = compact.replace("-", "/").split("/")
-        if any(p.strip() in targets for p in parts):
-            return True
-    return False
+    raw = item.get("size_title") or item.get("title") or ""
+    normalized = str(raw).upper()
+    return any(
+        re.search(rf"(?<![A-Z0-9]){re.escape(str(target).upper())}(?![A-Z0-9])", normalized)
+        for target in target_sizes
+    )
 
 
 def looks_like_gymwear(item: dict, watch: dict) -> bool:
