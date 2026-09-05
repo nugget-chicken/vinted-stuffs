@@ -3,16 +3,21 @@ import unittest
 import vinted_bot as bot
 
 CONFIG = {
-    "min_deal_score": 8,
+    "min_deal_score": 9,
     "require_hunt_fit": True,
     "keep_value_bands": ["steal", "hunt"],
+    "solo_floor_clothing_ron": 0,
+}
+CONFIG_FLOOR = {
+    **CONFIG,
     "solo_floor_clothing_ron": 100,
 }
-GYM = {"target_type": "men's gym clothing", "min_deal_score": 8}
+GYM = {"target_type": "men's gym clothing", "min_deal_score": 9}
+KNIT = {"target_type": "men's premium knitwear", "min_deal_score": 9}
 
 
 class KeepRuleTests(unittest.TestCase):
-    def test_steal_clothing_under_floor_is_keep(self):
+    def test_steal_clothing_under_old_floor_is_keep(self):
         item = {"price": {"amount": "80", "currency_code": "RON"}}
         score = {
             "deal_score": 9,
@@ -20,10 +25,10 @@ class KeepRuleTests(unittest.TestCase):
             "hunt_fit": True,
             "scam_risk": "medium",
         }
-        self.assertTrue(bot.is_keep(score, CONFIG, GYM, item))
+        self.assertTrue(bot.is_keep(score, CONFIG_FLOOR, GYM, item))
 
-    def test_hunt_clothing_under_floor_is_not_keep(self):
-        item = {"price": {"amount": "80", "currency_code": "RON"}}
+    def test_hunt_score_8_is_not_keep(self):
+        item = {"price": {"amount": "150", "currency_code": "RON"}}
         score = {
             "deal_score": 8,
             "value_band": "hunt",
@@ -31,6 +36,41 @@ class KeepRuleTests(unittest.TestCase):
             "scam_risk": "medium",
         }
         self.assertFalse(bot.is_keep(score, CONFIG, GYM, item))
+
+    def test_premium_hunt_under_floor_passes_when_floor_disabled(self):
+        item = {"price": {"amount": "60", "currency_code": "RON"}}
+        score = {
+            "deal_score": 9,
+            "value_band": "hunt",
+            "hunt_fit": True,
+            "scam_risk": "low",
+        }
+        self.assertTrue(bot.is_keep(score, CONFIG, KNIT, item))
+
+    def test_hunt_clothing_under_floor_blocked_when_floor_set(self):
+        item = {"price": {"amount": "80", "currency_code": "RON"}}
+        score = {
+            "deal_score": 9,
+            "value_band": "hunt",
+            "hunt_fit": True,
+            "scam_risk": "medium",
+        }
+        self.assertFalse(bot.is_keep(score, CONFIG_FLOOR, GYM, item))
+
+    def test_checkout_fees_scale_with_listing_sum(self):
+        cfg = {
+            "checkout_fees": {
+                "hu": {
+                    "estimated_shipping_ron": 18,
+                    "buyer_fee_fixed_ron": 3,
+                    "buyer_fee_pct": 0.05,
+                }
+            }
+        }
+        # 100 RON listing → 18 + 3 + 5 = 26
+        self.assertAlmostEqual(bot.checkout_extra_ron("hu", cfg, 100), 26.0)
+        # 300 RON listing → 18 + 3 + 15 = 36 (not a flat 40)
+        self.assertAlmostEqual(bot.checkout_extra_ron("hu", cfg, 300), 36.0)
 
 
 if __name__ == "__main__":

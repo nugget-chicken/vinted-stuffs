@@ -9,11 +9,11 @@ A saved search for one kind of thing the buyer wants (type, sizes, query, notes,
 _Avoid_: Watch (except as config key), alert, scrape
 
 **Keep**:
-A listing that is a true hunt match, steal or hunt value, at or above the score bar, and not high scam risk — and, if it is ordinary clothing sold alone, above the solo floor.
+A crème-de-la-crème listing: true hunt match, steal or hunt value, deal_score ≥ 9 (unless a hunt sets higher), not high scam risk. A merely good deal is not a keep.
 _Avoid_: Deal, hit, pass
 
 **Solo floor**:
-100 RON listing price. Ordinary clothing at or below this is never a keep by itself, unless it is a steal-band true match — then fees are worth it. Sneakers and premium knitwear are not bound by this clothing floor.
+Optional listing-price gate for ordinary clothing sold alone (`solo_floor_clothing_ron`). Default is 0 (disabled) so underpriced premium pieces (e.g. John Smedley at 60 RON) are not killed by price alone — the scorer and min score decide. If set above 0, hunt-band clothing at or below the floor is never a keep; steal-band always bypasses. Sneakers and premium knitwear are not bound by this clothing floor.
 _Avoid_: Min price, price_from (do not put a floor on search; the scorer judges cheap listings)
 
 **Hunt fit**:
@@ -21,15 +21,15 @@ Whether a listing genuinely matches a hunt's type, sizes, query, and notes — n
 _Avoid_: Relevant, match (unqualified)
 
 **Bundle**:
-Two or more listings from the same seller in one checkout: at least one keep, plus extra hunt-fit pieces that score at least 6 and are not skip or high scam risk, such that one checkout extra makes the combined absolute saving worth it. Prior keeps and extras stay in the bundle pool and can join a later checkout if they are still listed.
+Two or more listings from the same seller in one checkout: at least one keep, plus extra hunt-fit pieces that score at least 7 and are not skip or high scam risk, such that one checkout extra makes the combined absolute saving worth it. Only alert when the cart meaningfully beats buying fewer better pieces. Prior keeps and extras stay in the bundle pool and can join a later checkout if they are still listed.
 _Avoid_: Cart, lot, combo
 
 **Bundle extra**:
-A hunt-fit listing that is not a keep on its own, but is good enough to ride with a keep in a bundle (score at least 6, not skip, not high scam risk).
+A hunt-fit listing that is not a keep on its own, but is good enough to ride with a keep in a bundle (score at least 7, not skip, not high scam risk).
 _Avoid_: Filler, add-on (unqualified)
 
 **Checkout extra**:
-The assumed buyer cost once per checkout for shipping plus Vinted fees, on top of listing prices. 25 RON when the seller is in Romania; 40 RON when the seller is in Poland or Hungary; 25 RON otherwise. One extra per seller checkout, not per item.
+The assumed buyer cost once per checkout for shipping plus Vinted fees, on top of listing prices. Prefer `checkout_fees` (estimated shipping + fixed buyer fee + percent of listing sum) so a 50 RON and a 300 RON cart are not charged the same overhead; else fall back to flat `checkout_extra_ron` by country. One extra per seller checkout, not per item.
 _Avoid_: Shipping (alone), fee, postage
 
 **Seen key**:

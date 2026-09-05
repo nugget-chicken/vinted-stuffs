@@ -3,11 +3,11 @@ import unittest
 import vinted_bot as bot
 
 CONFIG = {
-    "min_deal_score": 8,
+    "min_deal_score": 9,
     "require_hunt_fit": True,
     "keep_value_bands": ["steal", "hunt"],
-    "solo_floor_clothing_ron": 100,
-    "bundle_extra_min_score": 6,
+    "solo_floor_clothing_ron": 0,
+    "bundle_extra_min_score": 7,
     "checkout_extra_ron": {"ro": 25, "default": 25},
 }
 WATCH = {"name": "Lululemon gym M-L", "target_type": "men's gym clothing", "country": "ro"}

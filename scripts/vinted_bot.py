@@ -365,17 +365,25 @@ def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, li
 # as BYOK; a chatgpt.com subscription cannot.
  
 SCORING_PROMPT = """The buyer pays shipping and Vinted buyer fees on top of \
-the listing price. Therefore cheap individual items are usually NOT \
-outstanding deals. Do not give a high deal score merely because an item \
-costs little.
+the listing price. Cheap individual items are usually NOT outstanding deals. \
+Do not give a high deal score merely because an item costs little, nor merely \
+because a premium brand is discounted.
 
-Prefer listings where the ABSOLUTE saving versus buying an equivalent \
-high-quality item new is substantial. For ordinary clothing, a cheap \
-low-value item is normally a skip even if its percentage discount is large.
+The buyer does NOT want to accumulate lots of clothes. Only recommend \
+creme-de-la-creme deals: items that are unusually good in quality, fit, \
+condition and price, and that would be genuinely disappointing to miss. \
+A normal good deal is a skip. Prefer fewer, better items over quantity.
 
-You are screening second-hand Vinted listings for a buyer who only wants \
-outstanding price-quality. Most listings should fail. Return ONLY a JSON \
-array (no prose, no markdown fences) with one object per listing:
+For a 9+ alert, several of these should hold at once:
+- outstanding product (not merely a correct brand)
+- large ABSOLUTE saving vs buying an equivalent high-quality item new
+- very good / unused condition
+- correct size and a cut the buyer will realistically wear often
+- timeless or highly functional, not filler
+
+You are screening second-hand Vinted listings. Most listings should fail. \
+Return ONLY a JSON array (no prose, no markdown fences) with one object \
+per listing:
 
   {{"id": <item id>, "deal_score": <1-10>, "value_band": "steal"|"hunt"|"acceptable"|"skip", \
 "hunt_fit": <true|false>, "scam_risk": "low"|"medium"|"high", \
@@ -404,11 +412,11 @@ value_band is price vs quality for that exact piece:
 ordinary used-market price, not a keep
   skip — overpriced, wrong item, poor condition, or junk keyword match
 
-deal_score is the price-quality ratio after fees/shipping, not "is it under the cap":
-  9-10 steal on a true match with substantial absolute saving vs new
-  8 hunt-band true match, very good or unused
-  6-7 merely acceptable / cap-adjacent / cheap-but-low-value — not a keep
-  1-5 overpriced, wrong line, weak condition, or too cheap to be worth fees
+deal_score (after fees/shipping) — 9 means "would hate to miss", not "good price":
+  10 = exceptional steal; rare enough to buy immediately
+  9 = outstanding deal; unusually strong value and very desirable
+  8 = good deal, but not special enough for this buyer — not a keep
+  7 or below = skip (acceptable, cap-adjacent, cheap-but-low-value, wrong line, weak condition)
 
 scam_risk, in order of importance:
   1. Seller account age/history (member_since, feedback_count, item_count) — \
@@ -457,16 +465,14 @@ def _scoring_prompt(watch: dict, items: list) -> str:
     if "maternity" in target:
         maternity_rules = (
             "For maternity clothing, do not reward an item simply because it is cheap. "
-            "The buyer pays shipping and Vinted buyer fees and prefers fewer, higher-value purchases. "
-            "Give the highest scores to: premium maternity-specific construction; "
+            "The buyer wants crème-de-la-crème only — fewer, higher-value purchases. "
+            "Give 9–10 only when several hold: premium maternity-specific construction; "
             "dresses, trousers, knitwear, outerwear and substantial pieces; "
             "garments usable both during pregnancy and postpartum/nursing; "
-            "excellent or unused condition; unusually large savings versus original retail. "
-            "A 30-50 RON basic maternity T-shirt sold individually is normally not a deal "
-            "worth alerting, even if its percentage discount looks large. "
+            "excellent or unused condition; unusually large absolute savings versus retail. "
+            "A 30-50 RON basic maternity T-shirt sold individually is a skip. "
             "Size target is women's L-XL. M/L or XL/XXL may qualify only when the brand's "
-            "actual measurements clearly make it appropriate. Do not reject those adjacent "
-            "sizes rigidly when the cut would realistically fit."
+            "actual measurements clearly make it appropriate."
         )
     return SCORING_PROMPT.format(
         query=watch["query"],
@@ -514,10 +520,10 @@ def is_clothing_solo_bound(watch: dict) -> bool:
 
 
 def is_keep(score: dict, config: dict, watch: dict, item: dict | None = None) -> bool:
-    """True only for a true-fit, high price-quality listing that is not high-risk."""
+    """True only for a true-fit, crème-level listing that is not high-risk."""
     if not score or score.get("scam_risk") == "high":
         return False
-    min_score = watch.get("min_deal_score", config.get("min_deal_score", 8))
+    min_score = watch.get("min_deal_score", config.get("min_deal_score", 9))
     if _as_int_score(score.get("deal_score")) < min_score:
         return False
     if config.get("require_hunt_fit", True) and score.get("hunt_fit") is not True:
@@ -527,12 +533,12 @@ def is_keep(score: dict, config: dict, watch: dict, item: dict | None = None) ->
     if band not in allowed:
         return False
     if item is not None and is_clothing_solo_bound(watch):
-        # Steal-band true matches stay keeps (e.g. Lululemon Vent Tech at 80 RON).
-        # The floor is only for ordinary hunt-band clothing where fees eat the save.
-        if (score.get("value_band") or "") != "steal":
+        # Steal-band always bypasses the solo floor (premium underpriced pieces).
+        # Floor (if > 0) only blocks ordinary hunt-band clothing where fees eat value.
+        if band != "steal":
             amount = listing_amount(item)
-            floor = float(config.get("solo_floor_clothing_ron", 100))
-            if amount is not None and amount <= floor:
+            floor = float(config.get("solo_floor_clothing_ron", 0))
+            if floor > 0 and amount is not None and amount <= floor:
                 return False
     return True
 
@@ -544,12 +550,29 @@ def is_bundle_extra(score: dict, config: dict) -> bool:
         return False
     if (score.get("value_band") or "skip") == "skip":
         return False
-    return _as_int_score(score.get("deal_score")) >= int(config.get("bundle_extra_min_score", 6))
+    return _as_int_score(score.get("deal_score")) >= int(config.get("bundle_extra_min_score", 7))
 
 
-def checkout_extra_ron(seller_country: str, config: dict) -> float:
-    table = config.get("checkout_extra_ron") or {}
+def checkout_extra_ron(
+    seller_country: str,
+    config: dict,
+    listing_sum: float | None = None,
+) -> float:
+    """Estimate one-checkout overhead (shipping + buyer fees).
+
+    Prefer checkout_fees (shipping + fixed + pct of listing sum) when present;
+    fall back to flat checkout_extra_ron by country.
+    """
     cc = (seller_country or "ro").lower()
+    fees_table = config.get("checkout_fees") or {}
+    row = fees_table.get(cc) or fees_table.get("default")
+    if row:
+        shipping = float(row.get("estimated_shipping_ron", 0))
+        fixed = float(row.get("buyer_fee_fixed_ron", 0))
+        pct = float(row.get("buyer_fee_pct", 0))
+        base = float(listing_sum or 0)
+        return shipping + fixed + base * pct
+    table = config.get("checkout_extra_ron") or {}
     return float(table.get(cc, table.get("default", 25)))
 
 
@@ -795,9 +818,9 @@ def assemble_bundles(scored: list, config: dict) -> tuple[list, list]:
                 (keeps[0]["item"].get("_profile") or {}).get("country_code")
                 or "ro"
             )
-            extra = checkout_extra_ron(country, config)
             members = keeps + extras
             listing_sum = sum(listing_amount(r["item"]) or 0 for r in members)
+            extra = checkout_extra_ron(country, config, listing_sum)
             bundles.append({
                 "seller_id": sid,
                 "seller": (keeps[0]["item"].get("user") or {}).get("login"),

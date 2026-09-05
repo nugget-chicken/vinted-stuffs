@@ -67,7 +67,7 @@ After deploy: open the Vercel URL → enter `DASHBOARD_SECRET` → **Run hunt** 
 ## Config notes
 
 - Omit `price_from` — high-recall search; the scorer judges cheap listings.
-- Ordinary clothing ≤ 100 RON is not a solo keep unless `value_band` is `steal`.
+- Default keep bar is deal_score ≥ 9 (crème only). Solo clothing floor defaults to 0; if raised, hunt-band clothing under it is blocked unless steal-band.
 - `FULL_SWEEP=1` / dashboard Full sweep: paginate hunts, no 10-item cap.
 
 ## Known limits
