@@ -370,6 +370,35 @@ def seller_login(item: dict) -> str | None:
     return _clean_login(profile.get("username"))
 
 
+def ensure_seller_fields(item: dict, country: str = "ro") -> dict:
+    """Fill user.id / user.login via item detail when search omitted the seller."""
+    if seller_id(item) and seller_login(item):
+        return item
+    iid = item.get("id")
+    if iid is None:
+        return item
+    try:
+        raw = _vinted_json(["item", str(iid), "-c", country, "--no-cache"], timeout=90)
+    except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
+        print(f"Seller backfill failed for item {iid}: {e}", file=sys.stderr)
+        return item
+    if not isinstance(raw, dict):
+        return item
+    normalized = _normalize_item(raw)
+    user = item.setdefault("user", {})
+    if not isinstance(user, dict):
+        user = {}
+        item["user"] = user
+    src = normalized.get("user") or {}
+    if src.get("id") and not user.get("id"):
+        user["id"] = src["id"]
+    if src.get("login") and not _clean_login(user.get("login")):
+        user["login"] = src["login"]
+    if not item.get("url") and normalized.get("url"):
+        item["url"] = normalized["url"]
+    return item
+
+
 def get_seller_items(user_id, country: str, limit: int) -> list:
     closets = get_seller_closets([user_id], country, limit)
     return closets.get(str(user_id), [])
@@ -1646,6 +1675,7 @@ def main() -> None:
     for keep in keeps:
         item = keep["item"]
         score = keep["score"]
+        ensure_seller_fields(item, _country(keep.get("watch_obj") or {"country": "ro"}))
         best_rows.insert(
             0,
             {

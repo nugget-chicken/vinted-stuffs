@@ -82,6 +82,25 @@ class ProfileBatchTests(unittest.TestCase):
             closets = bot.get_seller_closets([99], "ro", 12)
         self.assertEqual(closets["99"][0]["user"]["id"], 99)
 
+    def test_ensure_seller_fields_fetches_item_detail(self):
+        item = {"id": 42, "title": "tee", "user": {}}
+
+        def fake_vinted(args, **kwargs):
+            self.assertEqual(args[0], "item")
+            return {
+                "id": 42,
+                "title": "tee",
+                "price": "10",
+                "currency": "RON",
+                "seller": {"id": 7, "username": "alice"},
+            }
+
+        with patch.object(bot, "_vinted_json", side_effect=fake_vinted):
+            bot.ensure_seller_fields(item, "ro")
+        self.assertEqual(item["user"]["id"], 7)
+        self.assertEqual(item["user"]["login"], "alice")
+        self.assertEqual(bot.seller_login(item), "alice")
+
 
 if __name__ == "__main__":
     unittest.main()
