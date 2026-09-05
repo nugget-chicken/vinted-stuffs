@@ -2,6 +2,7 @@
 
 The live failure was Vinted bootstrap 429 after ~11 new `node dist/cli.js seller`
 processes per hunt. attach_seller_profiles must issue a single seller argv.
+Also backfill usernames from profile payloads so dashboard/bundles can match sellers.
 """
 import unittest
 from unittest.mock import patch
@@ -28,6 +29,7 @@ class ProfileBatchTests(unittest.TestCase):
                 "sellers": [
                     {
                         "id": 1000 + i,
+                        "username": f"user{i}",
                         "feedbackCount": 1,
                         "feedbackReputation": 1,
                         "itemCount": 2,
@@ -45,6 +47,40 @@ class ProfileBatchTests(unittest.TestCase):
         self.assertEqual(len(calls[0][1]["sellers"]["ids"]), 10)
         self.assertEqual(items[0]["_profile"]["feedback_count"], 1)
         self.assertEqual(items[9]["_profile"]["country_code"], "ro")
+        self.assertEqual(items[0]["user"]["login"], "user0")
+        self.assertEqual(bot.seller_login(items[3]), "user3")
+
+    def test_normalize_reads_seller_username(self):
+        item = bot._normalize_item({
+            "id": 1,
+            "title": "tee",
+            "price": {"amount": "10", "currency_code": "RON"},
+            "seller": {"id": 42, "username": "alice"},
+        })
+        self.assertEqual(item["user"]["id"], 42)
+        self.assertEqual(item["user"]["login"], "alice")
+
+    def test_closet_stamps_owner_id_when_item_omits_seller(self):
+        def fake_vinted(args, timeout=60, stdin_payload=None):
+            return {
+                "closets": [
+                    {
+                        "sellerId": 99,
+                        "items": [
+                            {
+                                "id": 7,
+                                "title": "shorts",
+                                "price": {"amount": "20", "currency_code": "RON"},
+                            }
+                        ],
+                        "error": None,
+                    }
+                ]
+            }
+
+        with patch.object(bot, "_vinted_json", side_effect=fake_vinted):
+            closets = bot.get_seller_closets([99], "ro", 12)
+        self.assertEqual(closets["99"][0]["user"]["id"], 99)
 
 
 if __name__ == "__main__":

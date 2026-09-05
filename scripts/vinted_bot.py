@@ -118,6 +118,13 @@ def _country(watch: dict) -> str:
     return watch.get("country") or watch.get("market") or "ro"
 
 
+def _clean_login(value) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
 def _normalize_item(raw: dict) -> dict:
     """Map CLI item shape onto the bot's internal ScrapeBadger-era fields."""
     price = raw.get("price")
@@ -137,7 +144,7 @@ def _normalize_item(raw: dict) -> dict:
             sid = None
         if not sid or sid <= 0:
             sid = None
-        login = seller.get("username") or seller.get("login")
+        login = _clean_login(seller.get("username") or seller.get("login"))
     return {
         "id": raw.get("id"),
         "title": raw.get("title", ""),
@@ -241,6 +248,9 @@ _profile_endpoint_disabled = False
 def _profile_from_seller_payload(data: dict) -> dict:
     raw = data.get("raw") if isinstance(data.get("raw"), dict) else {}
     return {
+        "username": _clean_login(
+            data.get("username") or data.get("login") or raw.get("login") or raw.get("username")
+        ),
         "member_since": data.get("member_since")
         or data.get("created_at")
         or raw.get("created_at"),
@@ -318,6 +328,7 @@ def attach_seller_profiles(items: list, country: str) -> None:
     needed = []
     for item in items:
         if item.get("_profile"):
+            _backfill_item_login(item)
             continue
         user = item.get("user") or {}
         user_id = user.get("id") if isinstance(user, dict) else None
@@ -328,10 +339,35 @@ def attach_seller_profiles(items: list, country: str) -> None:
     profiles = get_seller_profiles(needed, country)
     for item in items:
         if item.get("_profile") is not None:
+            _backfill_item_login(item)
             continue
         user = item.get("user") or {}
         user_id = user.get("id") if isinstance(user, dict) else None
         item["_profile"] = profiles.get(str(user_id), {}) if user_id else {}
+        _backfill_item_login(item)
+
+
+def _backfill_item_login(item: dict) -> None:
+    """Copy profile username onto item.user.login when search/closet omitted it."""
+    user = item.setdefault("user", {})
+    if not isinstance(user, dict):
+        return
+    if _clean_login(user.get("login")):
+        return
+    profile = item.get("_profile") or {}
+    login = _clean_login(profile.get("username") if isinstance(profile, dict) else None)
+    if login:
+        user["login"] = login
+
+
+def seller_login(item: dict) -> str | None:
+    """Best-available public username for an item (search → profile backfill)."""
+    user = item.get("user") if isinstance(item.get("user"), dict) else {}
+    login = _clean_login(user.get("login") or user.get("username"))
+    if login:
+        return login
+    profile = item.get("_profile") if isinstance(item.get("_profile"), dict) else {}
+    return _clean_login(profile.get("username"))
 
 
 def get_seller_items(user_id, country: str, limit: int) -> list:
@@ -377,11 +413,22 @@ def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, li
                 print(f"Closet crawl failed for seller {sid}: {row['error']}", file=sys.stderr)
                 # Omit failed sellers so value-haul can skip them.
                 continue
-            out[sid] = [
-                _normalize_item(it)
-                for it in (row.get("items") or [])
-                if it.get("id") is not None
-            ]
+            out[sid] = []
+            for it in (row.get("items") or []):
+                if it.get("id") is None:
+                    continue
+                item = _normalize_item(it)
+                user = item.setdefault("user", {})
+                if not isinstance(user, dict):
+                    user = {}
+                    item["user"] = user
+                try:
+                    owner_id = int(sid)
+                except (TypeError, ValueError):
+                    owner_id = None
+                if owner_id and not user.get("id"):
+                    user["id"] = owner_id
+                out[sid].append(item)
     return out
 
 
@@ -501,7 +548,7 @@ def _listing_payload(items: list) -> list:
             "size": it.get("size_title"),
             "condition": it.get("status"),
             "favourite_count": it.get("favourite_count"),
-            "seller": it.get("user", {}).get("login") if isinstance(it.get("user"), dict) else None,
+            "seller": seller_login(it),
             "seller_member_since": (it.get("_profile") or {}).get("member_since")
             or (it.get("_profile") or {}).get("created_at"),
             "seller_feedback_count": (it.get("_profile") or {}).get("feedback_count")
@@ -717,6 +764,7 @@ def serialize_pool_row(row: dict) -> dict:
         "score": row["score"],
         "watch": row["watch"],
         "seller_id": seller_id(row["item"]),
+        "seller": seller_login(row["item"]),
     }
 
 
@@ -904,7 +952,7 @@ def assemble_bundles(scored: list, config: dict) -> tuple[list, list]:
             extra = checkout_extra_ron(country, config, listing_sum)
             bundles.append({
                 "seller_id": sid,
-                "seller": (keeps[0]["item"].get("user") or {}).get("login"),
+                "seller": seller_login(keeps[0]["item"]),
                 "country": country,
                 "checkout_extra_ron": extra,
                 "listing_sum": listing_sum,
@@ -1460,8 +1508,10 @@ def main() -> None:
         if not vh.passes_value_haul_gate(len(candidates), rough, vh_cfg):
             continue
         first_item = meta["trigger_items"][0] if meta["trigger_items"] else candidates[0]
-        user = first_item.get("user") or {}
-        seller = user.get("login") if isinstance(user, dict) else None
+        seller = seller_login(first_item) or next(
+            (seller_login(c) for c in candidates if seller_login(c)),
+            None,
+        )
         payload = vh.build_haul_payload(
             seller,
             seller_country,
@@ -1575,7 +1625,6 @@ def main() -> None:
     for keep in keeps:
         item = keep["item"]
         score = keep["score"]
-        user = item.get("user") or {}
         best_rows.insert(
             0,
             {
@@ -1591,7 +1640,7 @@ def main() -> None:
                 "scam_risk": score.get("scam_risk"),
                 "reason": score.get("reason"),
                 "seller_id": seller_id(item),
-                "seller": user.get("login") if isinstance(user, dict) else None,
+                "seller": seller_login(item),
                 "seller_country": (item.get("_profile") or {}).get("country_code"),
             },
         )
@@ -1599,12 +1648,16 @@ def main() -> None:
 
     bundle_rows = load_bundles()
     for bundle in bundles:
+        keep_items = bundle.get("keeps") or []
+        bundle_seller = bundle.get("seller") or (
+            seller_login(keep_items[0]["item"]) if keep_items else None
+        )
         bundle_rows.insert(
             0,
             {
                 "kept_at": now,
                 "kind": "keep_bundle",
-                "seller": bundle.get("seller"),
+                "seller": bundle_seller,
                 "seller_id": bundle["seller_id"],
                 "country": bundle.get("country"),
                 "checkout_extra_ron": bundle["checkout_extra_ron"],
@@ -1620,7 +1673,7 @@ def main() -> None:
                         "watch": r["watch"],
                         "deal_score": r["score"].get("deal_score"),
                         "seller_id": seller_id(r["item"]),
-                        "seller": (r["item"].get("user") or {}).get("login"),
+                        "seller": seller_login(r["item"]) or bundle_seller,
                     }
                     for r in bundle["keeps"] + bundle["extras"]
                 ],
@@ -1673,8 +1726,7 @@ def main() -> None:
                 "scam_risk": r["score"].get("scam_risk"),
                 "reason": r["score"].get("reason"),
                 "seller_id": seller_id(r["item"]),
-                "seller": ((r["item"].get("user") or {}).get("login")
-                           if isinstance(r["item"].get("user"), dict) else None),
+                "seller": seller_login(r["item"]),
             }
             for r in top
         ],

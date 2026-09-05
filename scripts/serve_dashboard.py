@@ -95,10 +95,34 @@ def build_snapshot() -> dict:
             "hunt_fit": score.get("hunt_fit") if score.get("hunt_fit") is not None else existing.get("hunt_fit"),
             "reason": score.get("reason") or existing.get("reason"),
             "seller_id": raw.get("seller_id") or user.get("id") or existing.get("seller_id"),
-            "seller": user.get("login") or existing.get("seller"),
+            "seller": user.get("login") or raw.get("seller") or existing.get("seller"),
             "seller_country": (item.get("_profile") or {}).get("country_code") or existing.get("seller_country"),
             "source": existing.get("source") or "pool",
         }
+
+    # Propagate known usernames onto finds that only have seller_id.
+    login_by_sid: dict[str, str] = {}
+    for f in finds_by_id.values():
+        if f.get("seller_id") is not None and f.get("seller"):
+            login_by_sid[str(f["seller_id"])] = f["seller"]
+    for b in bundles if isinstance(bundles, list) else []:
+        if b.get("seller_id") is not None and b.get("seller"):
+            login_by_sid[str(b["seller_id"])] = b["seller"]
+        for it in b.get("items") or []:
+            sid = it.get("seller_id") or b.get("seller_id")
+            name = it.get("seller") or b.get("seller")
+            if sid is not None and name:
+                login_by_sid[str(sid)] = name
+    for f in finds_by_id.values():
+        if not f.get("seller") and f.get("seller_id") is not None:
+            f["seller"] = login_by_sid.get(str(f["seller_id"]))
+    for b in bundles if isinstance(bundles, list) else []:
+        if not b.get("seller") and b.get("seller_id") is not None:
+            b["seller"] = login_by_sid.get(str(b["seller_id"]))
+        for it in b.get("items") or []:
+            sid = it.get("seller_id") or b.get("seller_id")
+            if not it.get("seller") and sid is not None:
+                it["seller"] = login_by_sid.get(str(sid)) or b.get("seller")
 
     finds = list(finds_by_id.values())
 
