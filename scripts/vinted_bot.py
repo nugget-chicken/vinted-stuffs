@@ -35,8 +35,8 @@ BEST_PATH = Path("data/best_deals.json")
 BUNDLE_PATH = Path("data/best_bundles.json")
 POOL_PATH = Path("data/bundle_pool.json")
 LAST_RUN_PATH = Path("data/last_run.json")
-CONFIG_PATH = Path("scripts/config.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
+CONFIG_PATH = Path(os.environ.get("VINTED_CONFIG", str(REPO_ROOT / "scripts" / "config.json")))
 VERCEL_GATEWAY_BASE = "https://ai-gateway.vercel.sh/v1"
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.6-flash"
 # Cheap default; override with AI_GATEWAY_MODEL (e.g. openai/gpt-4.1-mini)
