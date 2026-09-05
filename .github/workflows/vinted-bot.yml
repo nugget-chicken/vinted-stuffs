@@ -42,8 +42,15 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r scripts/requirements.txt
 
-      - name: Install Vinted CLI
-        run: npm install --no-save @googlarz/vinted-client@^1.1.5
+      - name: Checkout Vinted CLI
+        uses: actions/checkout@v4
+        with:
+          repository: googlarz/vinted-mcp-cli
+          path: vinted-mcp-cli
+
+      - name: Build Vinted CLI
+        working-directory: vinted-mcp-cli
+        run: npm ci && npm run build
 
       - name: Run bot
         env:
@@ -53,7 +60,7 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           SKIP_SCORING: ${{ inputs.skip_scoring }}
           FULL_SWEEP: ${{ inputs.full_sweep }}
-          VINTED_BIN: ${{ github.workspace }}/node_modules/@googlarz/vinted-client/dist/cli.js
+          VINTED_BIN: ${{ github.workspace }}/vinted-mcp-cli/dist/cli.js
         run: python scripts/vinted_bot.py
 
       - name: Commit updated state
