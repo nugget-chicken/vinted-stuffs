@@ -72,6 +72,21 @@ class KeepRuleTests(unittest.TestCase):
         # 300 RON listing → 18 + 3 + 15 = 36 (not a flat 40)
         self.assertAlmostEqual(bot.checkout_extra_ron("hu", cfg, 300), 36.0)
 
+    def test_bundle_hunt_watch_never_keep(self):
+        item = {"price": {"amount": "200", "currency_code": "RON"}}
+        score = {
+            "deal_score": 10,
+            "value_band": "steal",
+            "hunt_fit": True,
+            "scam_risk": "low",
+        }
+        watch = {
+            "target_type": "men's gym clothing",
+            "bundle_hunt": True,
+            "min_deal_score": 8,
+        }
+        self.assertFalse(bot.is_keep(score, CONFIG, watch, item))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,7 @@
 # Value haul hunt
 
 Date: 2026-09-05  
-Status: approved for planning  
+Status: implemented  
 Repo: `vinted-stuffs` (bot in `scripts/vinted_bot.py`)
 
 ## Problem

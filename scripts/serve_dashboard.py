@@ -150,7 +150,17 @@ def build_snapshot() -> dict:
                 sellers[key]["watches"].add(f["watch"])
 
     for b in bundles if isinstance(bundles, list) else []:
-        bump(b.get("seller_id"), b.get("seller"), b.get("country"), 0, None)
+        if b.get("kind") == "value_haul":
+            bump(
+                b.get("seller_id"),
+                b.get("seller"),
+                b.get("country"),
+                b.get("deal_score"),
+                b.get("value_band"),
+                is_keep=b.get("value_band") in ("steal", "hunt"),
+            )
+        else:
+            bump(b.get("seller_id"), b.get("seller"), b.get("country"), 0, None)
         for it in b.get("items") or []:
             bump(
                 b.get("seller_id"),

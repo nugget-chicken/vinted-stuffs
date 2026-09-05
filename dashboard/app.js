@@ -207,10 +207,15 @@ function renderBundles() {
   const bundles = state.data.bundles || [];
   const root = $("#bundles-root");
   if (!bundles.length) {
-    root.innerHTML = `<div class="empty">No bundles yet. After the sweep finds a keep + extra from the same seller (including prior pool items still listed), they land here.</div>`;
+    root.innerHTML = `<div class="empty">No bundles or value hauls yet. Keep bundles appear when a keep + extra from the same seller lines up; value hauls when two or more useful gym pieces from one seller clear the haul gate.</div>`;
     return;
   }
   root.innerHTML = `<div class="bundle-grid">${bundles.map((b) => {
+    const kind = b.kind || "keep_bundle";
+    const kindLabel = kind === "value_haul" ? "value haul" : "keep bundle";
+    const per = b.effective_price_per_useful_item != null
+      ? ` · ~${Number(b.effective_price_per_useful_item).toFixed(0)} RON/item`
+      : "";
     const items = (b.items || []).map((it) => `
       <div class="bundle-item">
         <span class="pill ${it.role === "keep" ? "keep" : "hunt"}">${escapeHtml(it.role || "")}</span>
@@ -227,8 +232,8 @@ function renderBundles() {
       ? `<a class="link" href="https://www.vinted.ro/member/${b.seller_id}" target="_blank" rel="noreferrer">${escapeHtml(b.seller || b.seller_id)}</a>`
       : escapeHtml(b.seller || "seller");
     return `<article class="bundle">
-      <h3>${profile}</h3>
-      <meta>${escapeHtml(b.country || "?")} · listings ${Number(b.listing_sum || 0).toFixed(0)} + extra ${b.checkout_extra_ron} = <strong>${Number(b.checkout_total || 0).toFixed(0)} RON</strong> · ${fmtWhen(b.kept_at)}</meta>
+      <h3>${profile} <span class="pill ${kind === "value_haul" ? "haul" : "keep"}">${kindLabel}</span></h3>
+      <meta>${escapeHtml(b.country || "?")} · listings ${Number(b.listing_sum || 0).toFixed(0)} + extra ${b.checkout_extra_ron} = <strong>${Number(b.checkout_total || 0).toFixed(0)} RON</strong>${per} · ${fmtWhen(b.kept_at)}</meta>
       <div class="bundle-items">${items}</div>
     </article>`;
   }).join("")}</div>`;

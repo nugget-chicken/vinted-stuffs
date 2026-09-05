@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import vinted_bot as bot
 
@@ -35,6 +36,28 @@ def row(iid, score, band, seller, price="150", hunt_fit=True):
 
 
 class BundlePoolTests(unittest.TestCase):
+    def test_failed_closet_is_omitted_but_empty_closet_is_retained(self):
+        response = {
+            "closets": [
+                {"sellerId": 10, "error": "temporary failure"},
+                {"sellerId": 20, "items": []},
+            ]
+        }
+        with patch.object(bot, "_vinted_json", return_value=response):
+            closets = bot.get_seller_closets([10, 20], "ro", 12)
+        self.assertNotIn("10", closets)
+        self.assertEqual(closets["20"], [])
+
+    def test_alerted_keys_preserve_insertion_order_and_trim_oldest(self):
+        ordered = [f"old-{i}" for i in range(200)]
+        membership = set(ordered)
+        bot.add_alerted_bundle_key(ordered, membership, "value-haul")
+        bot.add_alerted_bundle_key(ordered, membership, "keep-bundle")
+        bot.add_alerted_bundle_key(ordered, membership, "value-haul")
+        self.assertEqual(ordered[-2:], ["value-haul", "keep-bundle"])
+        self.assertEqual(ordered[-200:][0], "old-2")
+        self.assertEqual(len(ordered), 202)
+
     def test_prior_extra_plus_new_keep_makes_bundle(self):
         keep = row(1, 9, "steal", 99)
         extra = row(2, 7, "acceptable", 99)

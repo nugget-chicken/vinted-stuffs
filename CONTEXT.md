@@ -28,6 +28,18 @@ _Avoid_: Cart, lot, combo
 A hunt-fit listing that is not a keep on its own, but is good enough to ride with a keep in a bundle (score at least 7, not skip, not high scam risk).
 _Avoid_: Filler, add-on (unqualified)
 
+**Value haul**:
+Two or more useful gym pieces from one seller in one checkout, judged by delivered cost per useful item, not brand luxury. Alerted and stored as kind value_haul — no keep required.
+_Avoid_: Keep-bundle (that still needs a keep)
+
+**Bundle hunt**:
+A watch with bundle_hunt true. Search hits are seeds only: they trigger closet inspection and never solo-alert or become keeps.
+_Avoid_: Ordinary hunt, keep
+
+**Keep-bundle**:
+The existing bundle shape: at least one keep plus extras from the same seller. Stored as kind keep_bundle.
+_Avoid_: Value haul
+
 **Checkout extra**:
 The assumed buyer cost once per checkout for shipping plus Vinted fees, on top of listing prices. Prefer `checkout_fees` (estimated shipping + fixed buyer fee + percent of listing sum) so a 50 RON and a 300 RON cart are not charged the same overhead; else fall back to flat `checkout_extra_ron` by country. One extra per seller checkout, not per item.
 _Avoid_: Shipping (alone), fee, postage
