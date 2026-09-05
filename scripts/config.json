@@ -56,7 +56,10 @@
     "max_value_hauls_per_run": 15,
     "max_closet_sellers": 40,
     "max_seeds_per_watch": 25,
-    "max_candidate_price_ron": 40
+    "max_candidate_price_ron": 40,
+    "max_near_hauls_per_run": 25,
+    "max_opportunity_bundles": 80,
+    "near_max_delivered_per_item_ron": 45
   },
   "watches": [
     {

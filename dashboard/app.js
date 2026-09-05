@@ -207,15 +207,23 @@ function renderBundles() {
   const bundles = state.data.bundles || [];
   const root = $("#bundles-root");
   if (!bundles.length) {
-    root.innerHTML = `<div class="empty">No bundles or value hauls yet. Keep bundles appear when a keep + extra from the same seller lines up; value hauls when two or more useful gym pieces from one seller clear the haul gate.</div>`;
+    root.innerHTML = `<div class="empty">No wardrobe opportunities yet. Near hauls appear when a seller’s closet has multiple size-fit gym/maternity pieces under the fee gate; value hauls when the model confirms a steal/hunt; keep bundles when a crème keep + extras line up.</div>`;
     return;
   }
   root.innerHTML = `<div class="bundle-grid">${bundles.map((b) => {
     const kind = b.kind || "keep_bundle";
-    const kindLabel = kind === "value_haul" ? "value haul" : "keep bundle";
+    const kindLabel =
+      kind === "value_haul" ? "value haul" :
+      kind === "near_haul" ? "near haul" :
+      "keep bundle";
+    const pillClass =
+      kind === "value_haul" ? "haul" :
+      kind === "near_haul" ? "near" :
+      "keep";
     const per = b.effective_price_per_useful_item != null
       ? ` · ~${Number(b.effective_price_per_useful_item).toFixed(0)} RON/item`
       : "";
+    const reason = b.reason ? ` · ${escapeHtml(b.reason)}` : "";
     const items = (b.items || []).map((it) => `
       <div class="bundle-item">
         <span class="pill ${it.role === "keep" ? "keep" : "hunt"}">${escapeHtml(it.role || "")}</span>
@@ -232,8 +240,8 @@ function renderBundles() {
       ? `<a class="link" href="https://www.vinted.ro/member/${b.seller_id}" target="_blank" rel="noreferrer">${escapeHtml(b.seller || b.seller_id)}</a>`
       : escapeHtml(b.seller || "seller");
     return `<article class="bundle">
-      <h3>${profile} <span class="pill ${kind === "value_haul" ? "haul" : "keep"}">${kindLabel}</span></h3>
-      <meta>${escapeHtml(b.country || "?")} · listings ${Number(b.listing_sum || 0).toFixed(0)} + extra ${b.checkout_extra_ron} = <strong>${Number(b.checkout_total || 0).toFixed(0)} RON</strong>${per} · ${fmtWhen(b.kept_at)}</meta>
+      <h3>${profile} <span class="pill ${pillClass}">${kindLabel}</span></h3>
+      <meta>${escapeHtml(b.country || "?")} · listings ${Number(b.listing_sum || 0).toFixed(0)} + extra ${b.checkout_extra_ron} = <strong>${Number(b.checkout_total || 0).toFixed(0)} RON</strong>${per}${reason} · ${fmtWhen(b.kept_at)}</meta>
       <div class="bundle-items">${items}</div>
     </article>`;
   }).join("")}</div>`;

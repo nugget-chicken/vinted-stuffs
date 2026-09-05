@@ -49,6 +49,9 @@ def value_haul_config(config: dict) -> dict:
         "max_closet_sellers": 40,
         "max_seeds_per_watch": 25,
         "max_candidate_price_ron": 40,
+        "max_near_hauls_per_run": 25,
+        "max_opportunity_bundles": 80,
+        "near_max_delivered_per_item_ron": 45,
     }
     merged = dict(defaults)
     merged.update(config.get("value_haul") or {})
@@ -158,6 +161,16 @@ def passes_value_haul_gate(n: int, rough_per_item: float | None, vh: dict) -> bo
     if n >= min_steal and rough_per_item is not None and rough_per_item <= steal_cap:
         return True
     return False
+
+
+def passes_near_haul_gate(n: int, rough_per_item: float | None, vh: dict) -> bool:
+    """Dashboard opportunities: ≥2 size-fit pieces with a looser delivered cap."""
+    if n < int(vh.get("min_items_steal", 2)):
+        return False
+    cap = float(vh.get("near_max_delivered_per_item_ron", 45))
+    if rough_per_item is None:
+        return True
+    return rough_per_item <= cap
 
 
 def prefilter_candidates(items: list, watch: dict, config: dict) -> list:
@@ -366,3 +379,100 @@ def value_haul_record(haul: dict, score: dict, useful: list, watch_name: str, ke
             for it in useful
         ],
     }
+
+
+def near_haul_record(
+    haul: dict,
+    useful: list,
+    watch_name: str,
+    kept_at: str,
+    rough_per_item: float | None = None,
+    reason: str | None = None,
+) -> dict:
+    """Dashboard-only opportunity: fee gate passed, not LLM-confirmed steal."""
+    listing_sum = sum(_listing_amount(it) or 0 for it in useful)
+    extra = float(haul.get("checkout_extra_ron") or 0)
+    per = rough_per_item
+    if per is None:
+        per = rough_delivered_per_item(useful, extra)
+    return {
+        "kept_at": kept_at,
+        "kind": "near_haul",
+        "seller": haul.get("seller"),
+        "seller_id": haul.get("seller_id"),
+        "country": haul.get("country"),
+        "checkout_extra_ron": extra,
+        "listing_sum": listing_sum,
+        "checkout_total": listing_sum + extra,
+        "deal_score": None,
+        "value_band": "opportunity",
+        "reason": reason or "Fee-gated closet match (not LLM-confirmed)",
+        "watch": watch_name,
+        "effective_price_per_useful_item": per,
+        "items": [
+            {
+                "role": "haul",
+                "id": it.get("id"),
+                "title": it.get("title"),
+                "price": _listing_amount(it),
+                "url": it.get("url"),
+                "watch": watch_name,
+                "deal_score": None,
+                "seller": haul.get("seller") or it.get("seller"),
+                "seller_id": haul.get("seller_id") or it.get("seller_id"),
+            }
+            for it in useful
+        ],
+    }
+
+
+def bundle_row_fingerprint(row: dict) -> str:
+    sid = row.get("seller_id")
+    ids = sorted(str(it.get("id")) for it in (row.get("items") or []) if it.get("id") is not None)
+    return f"{sid}:" + ",".join(ids)
+
+
+_KIND_RANK = {"value_haul": 2, "near_haul": 1, "keep_bundle": 0}
+
+
+def merge_bundle_rows(
+    existing: list,
+    incoming: list,
+    *,
+    max_opportunity: int = 80,
+    max_keep_bundles: int = 30,
+) -> list:
+    """Merge bundle rows; value_haul supersedes near_haul on the same fingerprint."""
+    by_fp: dict[str, dict] = {}
+    keep_rows: list[dict] = []
+
+    def consider(row: dict) -> None:
+        kind = row.get("kind") or "keep_bundle"
+        if kind == "keep_bundle":
+            keep_rows.append(row)
+            return
+        fp = bundle_row_fingerprint(row)
+        prev = by_fp.get(fp)
+        if prev is None:
+            by_fp[fp] = row
+            return
+        prev_kind = prev.get("kind") or "near_haul"
+        if _KIND_RANK.get(kind, 0) > _KIND_RANK.get(prev_kind, 0):
+            by_fp[fp] = row
+        elif _KIND_RANK.get(kind, 0) == _KIND_RANK.get(prev_kind, 0):
+            # Newer wins (incoming processed after existing).
+            by_fp[fp] = row
+
+    for row in existing:
+        consider(row)
+    for row in incoming:
+        consider(row)
+
+    opportunities = sorted(
+        by_fp.values(),
+        key=lambda r: r.get("kept_at") or "",
+        reverse=True,
+    )[: int(max_opportunity)]
+    keeps = keep_rows[: int(max_keep_bundles)]
+    # Opportunities first (newest), then keep bundles.
+    return opportunities + keeps

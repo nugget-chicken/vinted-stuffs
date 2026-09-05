@@ -769,7 +769,7 @@ def load_bundles() -> list:
 
 def save_bundles(rows: list) -> None:
     BUNDLE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    BUNDLE_PATH.write_text(json.dumps(rows[:50], indent=2) + "\n")
+    BUNDLE_PATH.write_text(json.dumps(rows[:120], indent=2, ensure_ascii=False) + "\n")
 
 
 def _pool_item_snapshot(item: dict) -> dict:
@@ -1138,6 +1138,8 @@ def score_value_haul(payload: dict, config: dict, gateway_key: str, gemini_clien
 
 def is_value_haul_path_watch(watch: dict) -> bool:
     """Watches whose hunt-fits may seed Path B value-haul closet evaluation."""
+    if watch.get("bundle_hunt"):
+        return True
     target = (watch.get("target_type") or "").lower()
     name = (watch.get("name") or "").lower()
     if any(token in target for token in ("sneaker", "knit", "cashmere")):
@@ -1529,10 +1531,15 @@ def main() -> None:
     ]
     alerted_bundles = set(alerted_bundle_keys)
     value_hauls = []
+    near_hauls = []
     value_haul_limit = int(vh_cfg["max_value_hauls_per_run"])
+    near_haul_limit = int(vh_cfg.get("max_near_hauls_per_run", 25))
     value_haul_score_attempts = 0
     for meta in value_haul_sellers.values():
-        if value_haul_score_attempts >= value_haul_limit:
+        if (
+            value_haul_score_attempts >= value_haul_limit
+            and len(near_hauls) >= near_haul_limit
+        ):
             break
         sid_key = str(meta["sid"])
         if sid_key not in closets_by_sid:
@@ -1555,7 +1562,9 @@ def main() -> None:
         listing_sum_gate = sum(listing_amount(item) or 0 for item in candidates)
         extra = checkout_extra_ron(seller_country, config, listing_sum_gate)
         rough = vh.rough_delivered_per_item(candidates, extra)
-        if not vh.passes_value_haul_gate(len(candidates), rough, vh_cfg):
+        value_gate = vh.passes_value_haul_gate(len(candidates), rough, vh_cfg)
+        near_gate = vh.passes_near_haul_gate(len(candidates), rough, vh_cfg)
+        if not value_gate and not near_gate:
             continue
         first_item = meta["trigger_items"][0] if meta["trigger_items"] else candidates[0]
         seller = seller_login(first_item) or next(
@@ -1569,47 +1578,81 @@ def main() -> None:
             candidates,
             meta["watch"],
         )
-        value_haul_score_attempts += 1
-        if test_mode:
-            score = {
-                "deal_score": 9,
-                "value_band": "steal",
-                "useful_item_count": len(candidates),
-                "effective_price_per_useful_item": rough,
-                "hunt_fit": True,
-                "scam_risk": "low",
-                "reason": "TEST MODE value haul",
-                "reject_ids": [],
-            }
-        else:
-            score = score_value_haul(payload, config, gateway_key, gemini_client)
-        if not score:
-            continue
-        useful = vh.useful_items(candidates, score)
-        if not vh.is_value_haul_alert(score, useful, extra, vh_cfg):
-            continue
-        fingerprint = vh.value_haul_fingerprint(meta["sid"], useful)
-        if fingerprint in alerted_bundles:
-            continue
-        listing_sum = sum(listing_amount(item) or 0 for item in useful)
-        haul = dict(payload)
-        haul.update({
+        haul_base = {
+            **payload,
             "seller": seller,
             "seller_id": meta["sid"],
             "country": seller_country,
             "checkout_extra_ron": extra,
+        }
+        score = None
+        useful = candidates
+        if value_gate and value_haul_score_attempts < value_haul_limit:
+            value_haul_score_attempts += 1
+            if test_mode:
+                score = {
+                    "deal_score": 9,
+                    "value_band": "steal",
+                    "useful_item_count": len(candidates),
+                    "effective_price_per_useful_item": rough,
+                    "hunt_fit": True,
+                    "scam_risk": "low",
+                    "reason": "TEST MODE value haul",
+                    "reject_ids": [],
+                }
+            else:
+                score = score_value_haul(payload, config, gateway_key, gemini_client)
+            if score:
+                useful = vh.useful_items(candidates, score) or candidates
+                if vh.is_value_haul_alert(score, useful, extra, vh_cfg):
+                    fingerprint = vh.value_haul_fingerprint(meta["sid"], useful)
+                    if fingerprint not in alerted_bundles:
+                        listing_sum = sum(listing_amount(item) or 0 for item in useful)
+                        haul = dict(haul_base)
+                        haul.update({
+                            "listing_sum": listing_sum,
+                            "checkout_total": listing_sum + extra,
+                        })
+                        add_alerted_bundle_key(alerted_bundle_keys, alerted_bundles, fingerprint)
+                        value_hauls.append({
+                            "haul": haul,
+                            "score": score,
+                            "useful": useful,
+                            "watch_name": meta["watch"]["name"],
+                        })
+                        send_ntfy_value_haul(ntfy_topic, haul, score, useful)
+                        alerts_sent += 1
+                        continue
+        # Fee/opportunity gate passed but not an LLM steal — still surface on the dashboard.
+        if not near_gate:
+            continue
+        if len(near_hauls) >= near_haul_limit:
+            continue
+        near_items = candidates
+        fingerprint = vh.value_haul_fingerprint(meta["sid"], near_items)
+        if fingerprint in alerted_bundles:
+            continue
+        if any(
+            vh.value_haul_fingerprint(n["haul"]["seller_id"], n["useful"]) == fingerprint
+            for n in near_hauls
+        ):
+            continue
+        listing_sum = sum(listing_amount(item) or 0 for item in near_items)
+        haul = dict(haul_base)
+        haul.update({
             "listing_sum": listing_sum,
             "checkout_total": listing_sum + extra,
         })
-        add_alerted_bundle_key(alerted_bundle_keys, alerted_bundles, fingerprint)
-        value_hauls.append({
+        reason = None
+        if score is not None:
+            reason = score.get("reason") or "LLM did not confirm steal/hunt"
+        near_hauls.append({
             "haul": haul,
-            "score": score,
-            "useful": useful,
+            "useful": near_items,
             "watch_name": meta["watch"]["name"],
+            "rough": rough,
+            "reason": reason,
         })
-        send_ntfy_value_haul(ntfy_topic, haul, score, useful)
-        alerts_sent += 1
 
     this_run_ids = set(scored_ids)
     closet_live = {
@@ -1697,14 +1740,35 @@ def main() -> None:
         )
     save_best(best_rows)
 
-    bundle_rows = load_bundles()
+    opportunity_rows = []
+    for result in value_hauls:
+        opportunity_rows.append(
+            vh.value_haul_record(
+                result["haul"],
+                result["score"],
+                result["useful"],
+                result["watch_name"],
+                now,
+            )
+        )
+    for result in near_hauls:
+        opportunity_rows.append(
+            vh.near_haul_record(
+                result["haul"],
+                result["useful"],
+                result["watch_name"],
+                now,
+                rough_per_item=result.get("rough"),
+                reason=result.get("reason"),
+            )
+        )
+    new_keep_bundle_rows = []
     for bundle in bundles:
         keep_items = bundle.get("keeps") or []
         bundle_seller = bundle.get("seller") or (
             seller_login(keep_items[0]["item"]) if keep_items else None
         )
-        bundle_rows.insert(
-            0,
+        new_keep_bundle_rows.append(
             {
                 "kept_at": now,
                 "kind": "keep_bundle",
@@ -1728,21 +1792,14 @@ def main() -> None:
                     }
                     for r in bundle["keeps"] + bundle["extras"]
                 ],
-            },
+            }
         )
-    for result in value_hauls:
-        bundle_rows.insert(
-            0,
-            vh.value_haul_record(
-                result["haul"],
-                result["score"],
-                result["useful"],
-                result["watch_name"],
-                now,
-            ),
-        )
+    bundle_rows = vh.merge_bundle_rows(
+        load_bundles(),
+        new_keep_bundle_rows + opportunity_rows,
+        max_opportunity=int(vh_cfg.get("max_opportunity_bundles", 80)),
+    )
     save_bundles(bundle_rows)
-
     histogram: dict[str, int] = {}
     for row in scored:
         key = str(_as_int_score(row["score"].get("deal_score")))
@@ -1762,6 +1819,7 @@ def main() -> None:
         "solo_keeps": len(keeps),
         "bundles": len(bundles),
         "value_hauls": len(value_hauls),
+        "near_hauls": len(near_hauls),
         "alerts": alerts_sent,
         "score_histogram": histogram,
         "top": [
@@ -1789,10 +1847,12 @@ def main() -> None:
     state["last_candidates"] = len(solos)
     state["last_bundles"] = len(bundles)
     state["last_value_hauls"] = len(value_hauls)
+    state["last_near_hauls"] = len(near_hauls)
     save_state(state)
     print(
         f"Run complete. {len(solos)} solo keep(s), {len(bundles)} bundle(s), "
-        f"{len(value_hauls)} value haul(s), {alerts_sent} alert(s) sent.",
+        f"{len(value_hauls)} value haul(s), {len(near_hauls)} near haul(s), "
+        f"{alerts_sent} alert(s) sent.",
         file=sys.stderr,
     )
     print(f"Run complete. {alerts_sent} alert(s) sent.")

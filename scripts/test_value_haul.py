@@ -189,5 +189,62 @@ class PayloadAndAlertTests(unittest.TestCase):
         self.assertFalse(vh.is_value_haul_alert(score, items, 25.0, VH))
 
 
+class NearHaulTests(unittest.TestCase):
+    def test_near_haul_record_kind(self):
+        items = [item(1, "tee a"), item(2, "tee b")]
+        haul = {
+            "seller": "bob",
+            "seller_id": 9,
+            "country": "pl",
+            "checkout_extra_ron": 25,
+        }
+        row = vh.near_haul_record(haul, items, "Gym bundle seeds M-L", "2026-01-01T00:00:00Z", 22.5)
+        self.assertEqual(row["kind"], "near_haul")
+        self.assertEqual(row["value_band"], "opportunity")
+        self.assertIsNone(row["deal_score"])
+        self.assertEqual(row["seller"], "bob")
+        self.assertEqual(len(row["items"]), 2)
+        self.assertIn("Fee-gated", row["reason"])
+
+    def test_merge_supersedes_near_with_value(self):
+        items = [item(1, "a"), item(2, "b")]
+        near = vh.near_haul_record(
+            {"seller": "bob", "seller_id": 9, "country": "pl", "checkout_extra_ron": 25},
+            items,
+            "Gym",
+            "t1",
+            22.0,
+        )
+        value = vh.value_haul_record(
+            {"seller": "bob", "seller_id": 9, "country": "pl", "checkout_extra_ron": 25},
+            {"deal_score": 9, "value_band": "steal", "reason": "steal"},
+            items,
+            "Gym",
+            "t2",
+        )
+        merged = vh.merge_bundle_rows([near], [value], max_opportunity=80)
+        opps = [r for r in merged if r.get("kind") in ("value_haul", "near_haul")]
+        self.assertEqual(len(opps), 1)
+        self.assertEqual(opps[0]["kind"], "value_haul")
+
+    def test_near_gate_looser_than_value(self):
+        self.assertFalse(vh.passes_value_haul_gate(2, 40.0, VH))
+        self.assertTrue(vh.passes_near_haul_gate(2, 40.0, {**VH, "near_max_delivered_per_item_ron": 45}))
+        self.assertFalse(vh.passes_near_haul_gate(2, 50.0, {**VH, "near_max_delivered_per_item_ron": 45}))
+        self.assertFalse(vh.passes_near_haul_gate(1, 10.0, VH))
+
+    def test_merge_keeps_near_when_value_absent(self):
+        items = [item(1, "a"), item(2, "b")]
+        near = vh.near_haul_record(
+            {"seller": "bob", "seller_id": 9, "country": "pl", "checkout_extra_ron": 25},
+            items,
+            "Gym",
+            "t1",
+            22.0,
+        )
+        merged = vh.merge_bundle_rows([], [near], max_opportunity=80)
+        self.assertEqual(merged[0]["kind"], "near_haul")
+
+
 if __name__ == "__main__":
     unittest.main()

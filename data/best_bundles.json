@@ -1,5 +1,278 @@
 [
   {
+    "kept_at": "2026-09-05T20:23:39.453954+00:00",
+    "kind": "near_haul",
+    "seller": "nutka2008",
+    "seller_id": 101670319,
+    "country": "pl",
+    "checkout_extra_ron": 24.6635,
+    "listing_sum": 33.269999999999996,
+    "checkout_total": 57.933499999999995,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "H&M Mama bundle seed L-XL",
+    "effective_price_per_useful_item": 28.966749999999998,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9899635208,
+        "title": "Spodenki ciążowe H&M L len i wiskoza",
+        "price": 18.48,
+        "url": "https://www.vinted.ro/items/9899635208-spodenki-ciazowe-hm-l-len-i-wiskoza",
+        "watch": "H&M Mama bundle seed L-XL",
+        "deal_score": null,
+        "seller": "nutka2008",
+        "seller_id": 101670319
+      },
+      {
+        "role": "haul",
+        "id": 9899486356,
+        "title": "Koszulka ciążowa H&M L",
+        "price": 14.79,
+        "url": "https://www.vinted.ro/items/9899486356-koszulka-ciazowa-hm-l",
+        "watch": "H&M Mama bundle seed L-XL",
+        "deal_score": null,
+        "seller": "nutka2008",
+        "seller_id": 101670319
+      }
+    ]
+  },
+  {
+    "kept_at": "2026-09-05T20:23:39.453954+00:00",
+    "kind": "near_haul",
+    "seller": "kasia198x",
+    "seller_id": 91028197,
+    "country": "pl",
+    "checkout_extra_ron": 24.848,
+    "listing_sum": 36.96,
+    "checkout_total": 61.808,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "Gym bundle seeds M-L",
+    "effective_price_per_useful_item": 30.904,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9897979402,
+        "title": "Crivit & Maffashion L/XL koszulka sportowa",
+        "price": 18.48,
+        "url": "https://www.vinted.ro/items/9897979402-crivit-maffashion-lxl-koszulka-sportowa",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "kasia198x",
+        "seller_id": 91028197
+      },
+      {
+        "role": "haul",
+        "id": 9897931672,
+        "title": "CRIVIT x Maffashion 38/40 – czarna bluzka sportowa – Nowa",
+        "price": 18.48,
+        "url": "https://www.vinted.ro/items/9897931672-crivit-x-maffashion-3840-czarna-bluzka-sportowa-nowa",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "kasia198x",
+        "seller_id": 91028197
+      }
+    ]
+  },
+  {
+    "kept_at": "2026-09-05T20:23:39.453954+00:00",
+    "kind": "near_haul",
+    "seller": "cichywita",
+    "seller_id": 244458038,
+    "country": "pl",
+    "checkout_extra_ron": 25.587,
+    "listing_sum": 51.739999999999995,
+    "checkout_total": 77.327,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "Gym bundle seeds M-L",
+    "effective_price_per_useful_item": 38.6635,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9596366482,
+        "title": "Jasnozielona męska koszulka sportowa T-shirt Morela L",
+        "price": 27.11,
+        "url": "https://www.vinted.ro/items/9596366482-jasnozielona-meska-koszulka-sportowa-t-shirt-morela-l",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "cichywita",
+        "seller_id": 244458038
+      },
+      {
+        "role": "haul",
+        "id": 9606307047,
+        "title": "Czarna koszulka sportowa T-shirt treningowy Domyos L",
+        "price": 24.63,
+        "url": "https://www.vinted.ro/items/9606307047-czarna-koszulka-sportowa-t-shirt-treningowy-domyos-l",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "cichywita",
+        "seller_id": 244458038
+      }
+    ]
+  },
+  {
+    "kept_at": "2026-09-05T20:23:39.453954+00:00",
+    "kind": "near_haul",
+    "seller": "nibyja2",
+    "seller_id": 91455072,
+    "country": "pl",
+    "checkout_extra_ron": 24.91,
+    "listing_sum": 38.2,
+    "checkout_total": 63.11,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "Gym bundle seeds M-L",
+    "effective_price_per_useful_item": 31.555,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9900827476,
+        "title": "Koszulka sportowa męska M",
+        "price": 17.25,
+        "url": "https://www.vinted.ro/items/9900827476-koszulka-sportowa-meska-m",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "nibyja2",
+        "seller_id": 91455072
+      },
+      {
+        "role": "haul",
+        "id": 9072771736,
+        "title": "Bluza męska sportowa L",
+        "price": 20.95,
+        "url": "https://www.vinted.ro/items/9072771736-bluza-meska-sportowa-l",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "nibyja2",
+        "seller_id": 91455072
+      }
+    ]
+  },
+  {
+    "kept_at": "2026-09-05T20:22:19.494691+00:00",
+    "kind": "near_haul",
+    "seller": "jessi5004",
+    "seller_id": 3128995009,
+    "country": "pl",
+    "checkout_extra_ron": 25.649,
+    "listing_sum": 52.980000000000004,
+    "checkout_total": 78.629,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "Gym bundle seeds M-L",
+    "effective_price_per_useful_item": 39.3145,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9534631103,
+        "title": "Legginsy sportowe melanż",
+        "price": 22.18,
+        "url": "https://www.vinted.ro/items/9534631103-legginsy-sportowe-melanz",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "jessi5004",
+        "seller_id": 3128995009
+      },
+      {
+        "role": "haul",
+        "id": 9534765134,
+        "title": "Różowe legginsy sportowe",
+        "price": 30.8,
+        "url": "https://www.vinted.ro/items/9534765134-rozowe-legginsy-sportowe",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "jessi5004",
+        "seller_id": 3128995009
+      }
+    ]
+  },
+  {
+    "kept_at": "2026-09-05T20:22:19.494691+00:00",
+    "kind": "near_haul",
+    "seller": "madadutz1",
+    "seller_id": 253367971,
+    "country": "ro",
+    "checkout_extra_ron": 19.55,
+    "listing_sum": 31.0,
+    "checkout_total": 50.55,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "Gym bundle seeds M-L",
+    "effective_price_per_useful_item": 25.275,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9900845742,
+        "title": "Hanorac negru cu glugă şnururi H&M şi Black Hoodie with Drawstrings",
+        "price": 15.0,
+        "url": "https://www.vinted.ro/items/9900845742-hanorac-negru-cu-gluga-snururi-hm-si-black-hoodie-with-drawstrings",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "madadutz1",
+        "seller_id": 253367971
+      },
+      {
+        "role": "haul",
+        "id": 9900897260,
+        "title": "Hanorac negru cu glugă şnururi H&M şi Black Hoodie with Drawstrings",
+        "price": 16.0,
+        "url": "https://www.vinted.ro/items/9900897260-hanorac-negru-cu-gluga-snururi-hm-si-black-hoodie-with-drawstrings",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": null,
+        "seller": "madadutz1",
+        "seller_id": 253367971
+      }
+    ]
+  },
+  {
+    "kept_at": "2026-09-05T20:22:19.494691+00:00",
+    "kind": "near_haul",
+    "seller": "diamencikowo",
+    "seller_id": 104082847,
+    "country": "pl",
+    "checkout_extra_ron": 25.156,
+    "listing_sum": 43.120000000000005,
+    "checkout_total": 68.27600000000001,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "H&M Mama bundle seed L-XL",
+    "effective_price_per_useful_item": 34.138000000000005,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9762121547,
+        "title": "Czarna Koszula 100% bawełna",
+        "price": 18.48,
+        "url": "https://www.vinted.ro/items/9762121547-czarna-koszula-100-bawelna",
+        "watch": "H&M Mama bundle seed L-XL",
+        "deal_score": null,
+        "seller": "diamencikowo",
+        "seller_id": 104082847
+      },
+      {
+        "role": "haul",
+        "id": 9790010512,
+        "title": "Półgolf w paski",
+        "price": 24.64,
+        "url": "https://www.vinted.ro/items/9790010512-polgolf-w-paski",
+        "watch": "H&M Mama bundle seed L-XL",
+        "deal_score": null,
+        "seller": "diamencikowo",
+        "seller_id": 104082847
+      }
+    ]
+  },
+  {
     "kept_at": "2026-09-05T19:56:57.208122+00:00",
     "kind": "value_haul",
     "seller": "anowi7777",

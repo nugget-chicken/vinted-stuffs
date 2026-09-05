@@ -264,6 +264,7 @@ tbody tr:hover { background: rgba(31, 111, 91, 0.05); }
 .pill.skip { color: var(--skip); }
 .pill.keep { color: var(--steal); }
 .pill.haul { color: var(--ok); background: rgba(61, 90, 128, 0.1); }
+.pill.near { color: #8a5a2b; background: rgba(138, 90, 43, 0.12); }
 .pill.pool, .pill.scored { color: var(--muted); }
 .risk-high { color: var(--danger); }
 .risk-medium { color: var(--hunt); }
