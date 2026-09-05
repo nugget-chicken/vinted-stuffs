@@ -1,2 +1,3 @@
 google-genai
 requests
+psycopg[binary]>=3.2

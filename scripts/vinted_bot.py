@@ -35,6 +35,7 @@ BEST_PATH = Path("data/best_deals.json")
 BUNDLE_PATH = Path("data/best_bundles.json")
 POOL_PATH = Path("data/bundle_pool.json")
 LAST_RUN_PATH = Path("data/last_run.json")
+INDEXED_PATH = Path("data/indexed_scores.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = Path(os.environ.get("VINTED_CONFIG", str(REPO_ROOT / "scripts" / "config.json")))
 VERCEL_GATEWAY_BASE = "https://ai-gateway.vercel.sh/v1"
@@ -884,6 +885,68 @@ def apply_fresh_items(rows: list, fresh: dict) -> None:
                 row["item"]["user"] = keep_user
 
 
+def revive_scored_for_sellers(
+    store,
+    seller_ids: list,
+    watches: list,
+    exclude_ids: set,
+    scored_store_mod,
+) -> list:
+    """Load cached scores for sellers; keep still-listed; skip exclude_ids / unknown hunts."""
+    by_name = {w["name"]: w for w in watches}
+    pending = []
+    specs = []
+    seen_spec = set()
+    for sid in seller_ids:
+        if sid is None:
+            continue
+        try:
+            rows = store.load_by_seller(int(sid))
+        except Exception as e:
+            print(f"scored_store load_by_seller({sid}) failed: {e}", file=sys.stderr)
+            continue
+        for row in rows:
+            iid = str(row.get("item_id"))
+            if not iid or iid == "None" or iid in exclude_ids:
+                continue
+            watch = by_name.get(row.get("hunt_name"))
+            if not watch:
+                continue
+            cand = scored_store_mod.candidate_from_cached(row, watch)
+            pending.append(cand)
+            try:
+                spec_id = int(row["item_id"])
+            except (TypeError, ValueError):
+                continue
+            if spec_id in seen_spec:
+                continue
+            seen_spec.add(spec_id)
+            spec = {"id": spec_id, "country": _country(watch)}
+            if cand["item"].get("url"):
+                spec["url"] = cand["item"]["url"]
+            specs.append(spec)
+    if not pending:
+        return []
+    try:
+        live, fresh = check_items_available(specs)
+    except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
+        print(f"scored_store availability check failed; skipping revive: {e}", file=sys.stderr)
+        return []
+    revived = []
+    for cand in pending:
+        iid = str(cand["item"].get("id"))
+        if iid not in live:
+            continue
+        apply_fresh_items([cand], fresh)
+        revived.append(cand)
+    return revived
+
+
+def save_indexed_scores(rows: list) -> None:
+    INDEXED_PATH.parent.mkdir(parents=True, exist_ok=True)
+    INDEXED_PATH.write_text(json.dumps(rows[:2000], indent=2, ensure_ascii=False) + "\n")
+
+
 def seed_pool_from_history(watches: list) -> list:
     """Rebuild pool rows from best_deals / last_run when bundle_pool.json is empty."""
     by_name = {w["name"]: w for w in watches}
@@ -1296,6 +1359,9 @@ def main() -> None:
     state = load_state()
     state.setdefault("seen_keys", [])
     state.setdefault("crawled_trigger_ids", [])
+    import scored_store as scored_store_mod
+
+    score_db = scored_store_mod.open_store()
     gemini_client = None
     if not test_mode and gemini_key:
         if genai is None:
@@ -1319,7 +1385,7 @@ def main() -> None:
             prior_rows = []
     prior_rows = pool_candidates(prior_rows, config)
 
-    def score_batch(watch: dict, items: list) -> None:
+    def score_batch(watch: dict, items: list, source: str = "search") -> None:
         if not items:
             return
         attach_seller_profiles(items, _country(watch))
@@ -1353,6 +1419,17 @@ def main() -> None:
                     "watch_obj": watch,
                 })
                 scored_ids.add(str(item.get("id")))
+                try:
+                    score_db.upsert_score(
+                        scored_store_mod.row_from_item_score(
+                            item, score, watch["name"], source=source,
+                        )
+                    )
+                except Exception as e:
+                    print(
+                        f"scored_store upsert failed for {item.get('id')}: {e}",
+                        file=sys.stderr,
+                    )
 
     full_sweep = _full_sweep()
     if full_sweep:
@@ -1523,7 +1600,7 @@ def main() -> None:
         for watch in watches:
             batch = by_watch.get(watch["name"], [])[:crawl_limit]
             if batch:
-                score_batch(watch, batch)
+                score_batch(watch, batch, source="closet_crawl")
     state["crawled_trigger_ids"] = list(crawled_triggers)
 
     alerted_bundle_keys = [
@@ -1689,7 +1766,31 @@ def main() -> None:
             print(f"Availability check failed; keeping unchecked prior finds: {e}", file=sys.stderr)
             still_prior.extend(unknown)
 
-    merged = merge_scored(scored, still_prior)
+    interesting_sids = []
+    seen_sids = set()
+    for row in list(scored) + list(still_prior):
+        sid = seller_id(row["item"])
+        if sid is None or sid in seen_sids:
+            continue
+        if row in scored and row["score"].get("hunt_fit") is not True:
+            continue
+        seen_sids.add(sid)
+        interesting_sids.append(sid)
+
+    exclude_ids = this_run_ids | {str(r["item"].get("id")) for r in still_prior}
+    revived = revive_scored_for_sellers(
+        score_db,
+        interesting_sids,
+        watches,
+        exclude_ids=exclude_ids,
+        scored_store_mod=scored_store_mod,
+    )
+    if revived:
+        print(
+            f"Revived {len(revived)} cached scored listing(s) from Cockroach.",
+            file=sys.stderr,
+        )
+    merged = merge_scored(scored, still_prior + revived)
     bundles, solos = assemble_bundles(merged, config)
     bundles = bundles[: int(config.get("max_bundles_per_run", 3))]
     new_bundles = []
@@ -1762,6 +1863,19 @@ def main() -> None:
                 reason=result.get("reason"),
             )
         )
+    try:
+        recent = score_db.load_recent(2000)
+        indexed_export = [scored_store_mod.export_row(r) for r in recent]
+        save_indexed_scores(indexed_export)
+        opportunity_rows.extend(
+            scored_store_mod.index_bundle_opportunities(indexed_export)
+        )
+        print(
+            f"Indexed score cache export: {len(indexed_export)} row(s).",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(f"indexed score export failed: {e}", file=sys.stderr)
     new_keep_bundle_rows = []
     for bundle in bundles:
         keep_items = bundle.get("keeps") or []
@@ -1849,6 +1963,10 @@ def main() -> None:
     state["last_value_hauls"] = len(value_hauls)
     state["last_near_hauls"] = len(near_hauls)
     save_state(state)
+    try:
+        score_db.close()
+    except Exception:
+        pass
     print(
         f"Run complete. {len(solos)} solo keep(s), {len(bundles)} bundle(s), "
         f"{len(value_hauls)} value haul(s), {len(near_hauls)} near haul(s), "

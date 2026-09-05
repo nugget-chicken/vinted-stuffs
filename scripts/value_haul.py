@@ -432,7 +432,13 @@ def bundle_row_fingerprint(row: dict) -> str:
     return f"{sid}:" + ",".join(ids)
 
 
-_KIND_RANK = {"value_haul": 2, "near_haul": 1, "keep_bundle": 0}
+_KIND_RANK = {
+    "value_haul": 3,
+    "near_haul": 2,
+    "index_keep_bundle": 2,
+    "index_near_bundle": 1,
+    "keep_bundle": 0,
+}
 
 
 def merge_bundle_rows(

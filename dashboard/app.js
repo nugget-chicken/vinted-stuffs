@@ -207,7 +207,7 @@ function renderBundles() {
   const bundles = state.data.bundles || [];
   const root = $("#bundles-root");
   if (!bundles.length) {
-    root.innerHTML = `<div class="empty">No wardrobe opportunities yet. Near hauls appear when a seller’s closet has multiple size-fit gym/maternity pieces under the fee gate; value hauls when the model confirms a steal/hunt; keep bundles when a crème keep + extras line up.</div>`;
+    root.innerHTML = `<div class="empty">No wardrobe opportunities yet. Near hauls appear when a seller’s closet clears the fee gate; index near/bundles come from the Cockroach score cache when the same seller has multiple hunt-fits; value hauls when the model confirms a steal/hunt.</div>`;
     return;
   }
   root.innerHTML = `<div class="bundle-grid">${bundles.map((b) => {
@@ -215,10 +215,13 @@ function renderBundles() {
     const kindLabel =
       kind === "value_haul" ? "value haul" :
       kind === "near_haul" ? "near haul" :
+      kind === "index_near_bundle" ? "index near" :
+      kind === "index_keep_bundle" ? "index bundle" :
       "keep bundle";
     const pillClass =
       kind === "value_haul" ? "haul" :
-      kind === "near_haul" ? "near" :
+      kind === "near_haul" || kind === "index_near_bundle" ? "near" :
+      kind === "index_keep_bundle" ? "keep" :
       "keep";
     const per = b.effective_price_per_useful_item != null
       ? ` · ~${Number(b.effective_price_per_useful_item).toFixed(0)} RON/item`

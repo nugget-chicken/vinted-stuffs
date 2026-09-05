@@ -45,6 +45,7 @@ def build_snapshot() -> dict:
     pool = _load("bundle_pool.json", [])
     run = _load("last_run.json", {})
     seen = _load("seen_listings.json", {})
+    indexed = _load("indexed_scores.json", [])
 
     finds_by_id: dict[str, dict] = {}
     for row in deals if isinstance(deals, list) else []:
@@ -56,6 +57,26 @@ def build_snapshot() -> dict:
             "price_num": _num(row.get("price")),
             "deal_score": _score(row.get("deal_score")),
         }
+    for row in indexed if isinstance(indexed, list) else []:
+        if row.get("id") is None:
+            continue
+        iid = str(row["id"])
+        existing = finds_by_id.get(iid)
+        if existing and existing.get("source") == "keep":
+            continue
+        finds_by_id[iid] = {
+            **(existing or {}),
+            **{k: v for k, v in row.items() if v is not None},
+            "source": (
+                existing.get("source")
+                if existing and existing.get("source") in ("scored", "pool")
+                else "index"
+            ),
+            "price_num": _num(row.get("price") if row.get("price") is not None else (existing or {}).get("price")),
+            "deal_score": _score(
+                row.get("deal_score") if row.get("deal_score") is not None else (existing or {}).get("deal_score")
+            ),
+        }
     for row in (run.get("top") or []):
         if row.get("id") is None:
             continue
@@ -64,7 +85,7 @@ def build_snapshot() -> dict:
         finds_by_id[iid] = {
             **base,
             **{k: v for k, v in row.items() if v is not None},
-            "source": base.get("source") or "scored",
+            "source": "keep" if base.get("source") == "keep" else (base.get("source") or "scored"),
             "price_num": _num(row.get("price") if row.get("price") is not None else base.get("price")),
             "deal_score": _score(row.get("deal_score") if row.get("deal_score") is not None else base.get("deal_score")),
             "kept_at": base.get("kept_at"),
@@ -236,6 +257,7 @@ def build_snapshot() -> dict:
         "meta": {
             "source": "local-filesystem",
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "indexed_count": len(indexed) if isinstance(indexed, list) else 0,
         },
     }
 

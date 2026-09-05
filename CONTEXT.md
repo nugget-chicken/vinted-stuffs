@@ -48,6 +48,10 @@ _Avoid_: Shipping (alone), fee, postage
 The pair of a listing id and a hunt name. A listing already judged for one hunt can still be judged for a later hunt.
 _Avoid_: seen_ids (legacy global suppress only)
 
+**Scored listings cache**:
+CockroachDB table of every LLM-scored listing (title, price, seller, full score). Thin seen keys stay in git for dedup; the cache lets the bot reuse scores when the same seller lists something new, after an availability check. A capped export (`data/indexed_scores.json`) feeds the live dashboard finds and index near/bundles.
+_Avoid_: Dumping all scores into seen_listings.json
+
 **Closet crawl**:
 After at least one hunt-fit from a seller, fetch up to 12 more of their active listings and score them against every hunt.
 _Avoid_: Full scrape, monitor user (unqualified)
