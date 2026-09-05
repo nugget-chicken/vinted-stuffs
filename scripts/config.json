@@ -5,8 +5,8 @@
     "steal",
     "hunt"
   ],
-  "max_keeps_per_run": 3,
-  "max_bundles_per_run": 1,
+  "max_keeps_per_run": 100,
+  "max_bundles_per_run": 10,
   "max_new_items_per_watch": 15,
   "solo_floor_clothing_ron": 0,
   "bundle_extra_min_score": 7,
@@ -48,9 +48,12 @@
     "excellent_max_delivered_per_item_ron": 25,
     "closet_crawl_limit": 36,
     "min_deal_score": 8,
-    "keep_value_bands": ["steal", "hunt"],
+    "keep_value_bands": [
+      "steal",
+      "hunt"
+    ],
     "max_candidates_to_score": 12,
-    "max_value_hauls_per_run": 3
+    "max_value_hauls_per_run": 15
   },
   "watches": [
     {
@@ -63,7 +66,10 @@
       "hunt_price": 50,
       "bundle_hunt": true,
       "target_type": "men's gym clothing suitable for building a multi-item bundle",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Individual item value can be modest. Looking for sellers with several useful men's gym pieces in M/L. H&M Sport/Move, Craft, Nike, Adidas, Under Armour, Puma, Reebok, Decathlon technical lines and similar are acceptable if several good-condition pieces can be bundled cheaply."
     },
     {
@@ -75,7 +81,10 @@
       "price_to": 250,
       "hunt_price": 150,
       "target_type": "men's gym clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Prioritise Pace Breaker, License to Train, Metal Vent Tech and other technical training lines. A merely good Craft-tier alternative should lose to a true Lululemon steal. Generic casual pieces are skips."
     },
     {
@@ -87,7 +96,10 @@
       "price_to": 250,
       "hunt_price": 150,
       "target_type": "men's gym clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Interval, Session, Tactical and other genuine Ten Thousand training pieces only."
     },
     {
@@ -99,7 +111,10 @@
       "price_to": 250,
       "hunt_price": 150,
       "target_type": "men's gym clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Premium technical training apparel. Prefer Reign, Commuter and similar lines in excellent condition."
     },
     {
@@ -111,7 +126,10 @@
       "price_to": 250,
       "hunt_price": 150,
       "target_type": "men's gym clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Technical tees, shorts and pants. Prefer Kore, Strato, Sunday Performance."
     },
     {
@@ -123,7 +141,10 @@
       "price_to": 280,
       "hunt_price": 170,
       "target_type": "men's gym or running clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Premium running/training pieces only. Strong absolute saving vs new required."
     },
     {
@@ -135,7 +156,10 @@
       "price_to": 220,
       "hunt_price": 130,
       "target_type": "men's technical running clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Technical running pieces with meaningful discount. Skip basic logo tees."
     },
     {
@@ -147,7 +171,10 @@
       "price_to": 220,
       "hunt_price": 130,
       "target_type": "men's technical training or running clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Falke ESS / technical performance lines only. Ordinary socks alone are not a keep."
     },
     {
@@ -159,7 +186,10 @@
       "price_to": 180,
       "hunt_price": 110,
       "target_type": "men's technical gym or running clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "ADV and PRO lines only. A merely good 120 RON Craft tee is a skip — wait for exceptional steals or better brands."
     },
     {
@@ -171,7 +201,10 @@
       "price_to": 200,
       "hunt_price": 120,
       "target_type": "men's technical gym, running or base-layer clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Performance, Zeroweight, Blackcomb and premium technical lines preferred. Skip ordinary basics."
     },
     {
@@ -183,7 +216,10 @@
       "price_to": 240,
       "hunt_price": 150,
       "target_type": "men's technical training or running clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Genuinely technical pieces only — not basic logo tees."
     },
     {
@@ -195,7 +231,10 @@
       "price_to": 220,
       "hunt_price": 140,
       "target_type": "men's training and compression clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Compression tights, shorts and technical tops. Excellent condition required."
     },
     {
@@ -207,7 +246,11 @@
       "price_to": 500,
       "hunt_price": 320,
       "target_type": "men's sneakers",
-      "target_sizes": ["43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Prefer Made in USA 990v4, v5 or v6. Condition and sole wear matter heavily. Reject suspicious fakes."
     },
     {
@@ -219,7 +262,12 @@
       "price_to": 550,
       "hunt_price": 350,
       "target_type": "men's sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Made in UK models preferred. Strong authenticity check required."
     },
     {
@@ -231,7 +279,12 @@
       "price_to": 550,
       "hunt_price": 350,
       "target_type": "men's sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Made in USA. Reject heavily worn heel, outsole or lining."
     },
     {
@@ -243,7 +296,12 @@
       "price_to": 400,
       "hunt_price": 250,
       "target_type": "men's sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Only alert on unusually strong price and condition. Ordinary used-market 2002R is a skip."
     },
     {
@@ -255,7 +313,12 @@
       "price_to": 400,
       "hunt_price": 250,
       "target_type": "men's sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Only very good price and condition. Reject heavily worn pairs."
     },
     {
@@ -267,7 +330,12 @@
       "price_to": 450,
       "hunt_price": 290,
       "target_type": "men's or unisex sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Authenticity is important because this model is frequently replicated."
     },
     {
@@ -279,7 +347,12 @@
       "price_to": 380,
       "hunt_price": 250,
       "target_type": "men's or unisex sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Good condition and meaningful discount required."
     },
     {
@@ -291,7 +364,12 @@
       "price_to": 350,
       "hunt_price": 220,
       "target_type": "men's or unisex sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Only outstanding price/condition. Skip ordinary used pairs."
     },
     {
@@ -303,7 +381,12 @@
       "price_to": 400,
       "hunt_price": 240,
       "target_type": "men's sneakers",
-      "target_sizes": ["42.5", "43", "43.5", "43 1/3"],
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
       "notes": "Heritage / premium Diadora lifestyle models only. Strong condition and absolute saving required."
     },
     {
@@ -315,7 +398,10 @@
       "price_to": 350,
       "hunt_price": 200,
       "target_type": "men's premium knitwear or polo",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Fine-gauge merino preferred. A 60 RON true Smedley in good condition can be a keep. Inspect moth holes, shrinkage, stains and stretched cuffs."
     },
     {
@@ -327,7 +413,10 @@
       "price_to": 400,
       "hunt_price": 230,
       "target_type": "men's premium knitwear",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Cashmere, Geelong and lambswool. Material and condition matter more than low price."
     },
     {
@@ -339,7 +428,10 @@
       "price_to": 450,
       "hunt_price": 260,
       "target_type": "men's premium cashmere or knitwear",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Genuine Johnstons cashmere/knit. Large retail-to-resale gap expected. Reject moth damage and cheap blends."
     },
     {
@@ -351,7 +443,10 @@
       "price_to": 450,
       "hunt_price": 260,
       "target_type": "men's premium cashmere or knitwear",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Italian premium cashmere/knit. Condition and authenticity critical."
     },
     {
@@ -363,7 +458,10 @@
       "price_to": 420,
       "hunt_price": 240,
       "target_type": "men's premium knitwear",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Scottish premium knitwear. Prefer cashmere and fine merino in excellent condition."
     },
     {
@@ -375,7 +473,10 @@
       "price_to": 400,
       "hunt_price": 230,
       "target_type": "men's premium knitwear or knit polo",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Premium Italian knit. Skip low-value accessories unless exceptional."
     },
     {
@@ -387,7 +488,10 @@
       "price_to": 320,
       "hunt_price": 190,
       "target_type": "men's premium knitwear or knit polo",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Merino and high-quality Italian knitwear preferred."
     },
     {
@@ -399,7 +503,10 @@
       "price_to": 450,
       "hunt_price": 260,
       "target_type": "men's premium knitwear, polo or T-shirt",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Merino, cashmere and premium cotton. Strong condition required."
     },
     {
@@ -411,7 +518,10 @@
       "price_to": 280,
       "hunt_price": 160,
       "target_type": "men's premium T-shirt, polo or knitwear",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Classic premium T-shirts, polos and merino. Avoid underwear unless unusually compelling."
     },
     {
@@ -423,7 +533,10 @@
       "price_to": 350,
       "hunt_price": 200,
       "target_type": "men's premium polo or T-shirt",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Premium Swiss basics. Sellers often underprice these as 'simple polos' — reward true steals only."
     },
     {
@@ -435,7 +548,10 @@
       "price_to": 320,
       "hunt_price": 180,
       "target_type": "men's premium polo or T-shirt",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Premium cotton polos/tees. Skip ordinary underwear packs."
     },
     {
@@ -447,7 +563,10 @@
       "price_to": 320,
       "hunt_price": 180,
       "target_type": "men's premium T-shirt or polo",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Loopwheel / premium basic tees. Only unusually strong price-quality."
     },
     {
@@ -459,7 +578,10 @@
       "price_to": 280,
       "hunt_price": 160,
       "target_type": "men's premium T-shirt or polo",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Premium basics. Skip multipacks of low interest; favour exceptional single pieces."
     },
     {
@@ -471,7 +593,10 @@
       "price_to": 260,
       "hunt_price": 150,
       "target_type": "men's merino T-shirt, long sleeve or technical layer",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "High merino content preferred. Check holes and excessive pilling. Prefer premium lines."
     },
     {
@@ -483,7 +608,10 @@
       "price_to": 260,
       "hunt_price": 150,
       "target_type": "men's merino T-shirt, long sleeve or technical layer",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Prioritise genuine high-merino technical pieces."
     },
     {
@@ -495,7 +623,10 @@
       "price_to": 240,
       "hunt_price": 140,
       "target_type": "men's technical merino clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Technical merino layers preferred. Skip ordinary socks unless exceptional."
     },
     {
@@ -507,7 +638,10 @@
       "price_to": 280,
       "hunt_price": 160,
       "target_type": "men's technical merino clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Alpine technical merino. Strong absolute saving vs new required."
     },
     {
@@ -519,7 +653,10 @@
       "price_to": 280,
       "hunt_price": 160,
       "target_type": "men's technical merino clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Swedish technical merino base layers. Excellent condition preferred."
     },
     {
@@ -532,7 +669,10 @@
       "hunt_price": 230,
       "min_deal_score": 9,
       "target_type": "men's premium cashmere knitwear",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Broad recall for cashmere / cașmir / kaschmir / cachemire / kasmír. Model must reject blends, anonymous junk and moth damage. Only crème pieces from credible makers."
     },
     {
@@ -545,7 +685,10 @@
       "hunt_price": 160,
       "min_deal_score": 9,
       "target_type": "men's premium or technical merino clothing",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Broad merino wildcard. Reject thin fashion blends and low-value basics. Prefer known makers and high wool content."
     },
     {
@@ -558,7 +701,10 @@
       "hunt_price": 230,
       "min_deal_score": 9,
       "target_type": "men's premium 100% cashmere knitwear",
-      "target_sizes": ["M", "L"],
+      "target_sizes": [
+        "M",
+        "L"
+      ],
       "notes": "Stricter complement to Cashmere broad. Only genuinely high-quality pure cashmere from a credible maker."
     },
     {
@@ -570,8 +716,13 @@
       "price_to": 350,
       "hunt_price": 190,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "High-priority brand. A 70 RON true Seraphine dress in great condition can be a keep. Prefer dresses, workwear, coats, knitwear, trousers and nursing-compatible pieces."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "High-priority brand. A 70 RON true Seraphine dress in great condition can be a keep. Prefer dresses, workwear, coats, knitwear, trousers and nursing-compatible pieces.",
+      "min_deal_score": 8
     },
     {
       "name": "Isabella Oliver maternity L-XL",
@@ -582,8 +733,13 @@
       "price_to": 380,
       "hunt_price": 200,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Premium maternity. Dresses, knitwear, tops and tailored pieces. Reject ordinary non-maternity unless clearly pregnancy-suitable."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium maternity. Dresses, knitwear, tops and tailored pieces. Reject ordinary non-maternity unless clearly pregnancy-suitable.",
+      "min_deal_score": 8
     },
     {
       "name": "Pietro Brunelli maternity L-XL",
@@ -594,8 +750,13 @@
       "price_to": 450,
       "hunt_price": 240,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Premium Italian maternity. Excellent condition required."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium Italian maternity. Excellent condition required.",
+      "min_deal_score": 8
     },
     {
       "name": "Tiffany Rose maternity dress L-XL",
@@ -606,8 +767,13 @@
       "price_to": 500,
       "hunt_price": 260,
       "target_type": "women's premium maternity occasion dress",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Only maternity occasion dresses with substantial absolute savings and excellent condition."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Only maternity occasion dresses with substantial absolute savings and excellent condition.",
+      "min_deal_score": 8
     },
     {
       "name": "Boob Design maternity L-XL",
@@ -618,8 +784,13 @@
       "price_to": 350,
       "hunt_price": 200,
       "target_type": "women's premium maternity and nursing clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "High priority when usable during pregnancy and later for nursing."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "High priority when usable during pregnancy and later for nursing.",
+      "min_deal_score": 8
     },
     {
       "name": "Ripe Maternity L-XL",
@@ -630,8 +801,13 @@
       "price_to": 300,
       "hunt_price": 170,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Versatile maternity pieces that also work postpartum. Avoid low-value basic tees unless bundled."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Versatile maternity pieces that also work postpartum. Avoid low-value basic tees unless bundled.",
+      "min_deal_score": 8
     },
     {
       "name": "Noppies maternity L-XL",
@@ -642,8 +818,13 @@
       "price_to": 260,
       "hunt_price": 150,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Dresses, trousers, jeans, knitwear and jackets preferred. Basics only if bundled or exceptional."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Dresses, trousers, jeans, knitwear and jackets preferred. Basics only if bundled or exceptional.",
+      "min_deal_score": 8
     },
     {
       "name": "Mamalicious maternity L-XL",
@@ -654,8 +835,13 @@
       "price_to": 220,
       "hunt_price": 120,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Buyer already likes Mamalicious. Prefer dresses, trousers, knitwear, outerwear. A cheap basic tee alone is not a keep."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Buyer already likes Mamalicious. Prefer dresses, trousers, knitwear, outerwear. A cheap basic tee alone is not a keep.",
+      "min_deal_score": 8
     },
     {
       "name": "Envie de Fraise maternity L-XL",
@@ -666,8 +852,13 @@
       "price_to": 280,
       "hunt_price": 150,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Prioritise dresses, trousers, blouses. Avoid generic low-value tops unless bundled."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Prioritise dresses, trousers, blouses. Avoid generic low-value tops unless bundled.",
+      "min_deal_score": 8
     },
     {
       "name": "JoJo Maman Bebe maternity L-XL",
@@ -678,8 +869,13 @@
       "price_to": 280,
       "hunt_price": 150,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Practical maternity. Prefer dresses, jeans, knitwear, outerwear. Basics alone should not alert."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Practical maternity. Prefer dresses, jeans, knitwear, outerwear. Basics alone should not alert.",
+      "min_deal_score": 8
     },
     {
       "name": "Hatch Collection maternity L-XL",
@@ -690,8 +886,13 @@
       "price_to": 450,
       "hunt_price": 240,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Premium maternity often wearable postpartum. Strong absolute saving required."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium maternity often wearable postpartum. Strong absolute saving required.",
+      "min_deal_score": 8
     },
     {
       "name": "Beyond Nine maternity L-XL",
@@ -702,8 +903,13 @@
       "price_to": 400,
       "hunt_price": 220,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Premium maternity. Prefer pieces usable postpartum."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium maternity. Prefer pieces usable postpartum.",
+      "min_deal_score": 8
     },
     {
       "name": "Storq maternity L-XL",
@@ -714,8 +920,13 @@
       "price_to": 350,
       "hunt_price": 190,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Premium everyday maternity that works postpartum."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium everyday maternity that works postpartum.",
+      "min_deal_score": 8
     },
     {
       "name": "Legoe Heritage maternity L-XL",
@@ -726,8 +937,13 @@
       "price_to": 380,
       "hunt_price": 200,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Premium maternity. Excellent condition and fit required."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium maternity. Excellent condition and fit required.",
+      "min_deal_score": 8
     },
     {
       "name": "Bae the Label maternity L-XL",
@@ -738,8 +954,13 @@
       "price_to": 350,
       "hunt_price": 190,
       "target_type": "women's premium maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Premium maternity/nursing. Prefer postpartum-wearable pieces."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium maternity/nursing. Prefer postpartum-wearable pieces.",
+      "min_deal_score": 8
     },
     {
       "name": "H&M Mama bundle seed L-XL",
@@ -749,10 +970,14 @@
       "per_page": 30,
       "price_to": 120,
       "hunt_price": 60,
-      "min_deal_score": 10,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Bundle seed like H&M Sport hauls — not premium solo hunting. Rarely alert alone; closet crawl / multi-piece seller carts with very low delivered per useful item."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Bundle seed like H&M Sport hauls — not premium solo hunting. Rarely alert alone; closet crawl / multi-piece seller carts with very low delivered per useful item. bundle_hunt seed: never solo-alert; closet-hunt for multi-piece L/XL maternity value hauls.",
+      "bundle_hunt": true
     },
     {
       "name": "Next Maternity bundle seed L-XL",
@@ -762,10 +987,14 @@
       "per_page": 30,
       "price_to": 140,
       "hunt_price": 70,
-      "min_deal_score": 10,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Bundle seed for closet hunting. Solo basics are skips unless an exceptional multi-piece value haul."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Bundle seed for closet hunting. Solo basics are skips unless an exceptional multi-piece value haul. bundle_hunt seed: never solo-alert; closet-hunt for multi-piece L/XL maternity value hauls.",
+      "bundle_hunt": true
     },
     {
       "name": "ASOS Maternity bundle seed L-XL",
@@ -775,10 +1004,14 @@
       "per_page": 30,
       "price_to": 140,
       "hunt_price": 70,
-      "min_deal_score": 10,
       "target_type": "women's maternity clothing",
-      "target_sizes": ["L", "XL", "L/XL"],
-      "notes": "Bundle seed for seller-closet hunting. Do not alert ordinary single ASOS maternity tees."
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Bundle seed for seller-closet hunting. Do not alert ordinary single ASOS maternity tees. bundle_hunt seed: never solo-alert; closet-hunt for multi-piece L/XL maternity value hauls.",
+      "bundle_hunt": true
     }
   ]
 }

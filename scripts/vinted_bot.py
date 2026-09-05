@@ -522,11 +522,13 @@ def _scoring_prompt(watch: dict, items: list) -> str:
     if "maternity" in target:
         maternity_rules = (
             "For maternity clothing, do not reward an item simply because it is cheap. "
-            "The buyer wants crème-de-la-crème only — fewer, higher-value purchases. "
-            "Give 9–10 only when several hold: premium maternity-specific construction; "
+            "Prefer fewer, higher-value purchases over accumulating basics. "
+            "Give 9–10 when several hold: premium maternity-specific construction; "
             "dresses, trousers, knitwear, outerwear and substantial pieces; "
             "garments usable both during pregnancy and postpartum/nursing; "
             "excellent or unused condition; unusually large absolute savings versus retail. "
+            "Give 8 for a true L–XL hunt-fit in very-good+ condition at or under hunt price "
+            "when the piece is genuinely useful maternity/nursing wear. "
             "A 30-50 RON basic maternity T-shirt sold individually is a skip. "
             "Size target is women's L-XL. M/L or XL/XXL may qualify only when the brand's "
             "actual measurements clearly make it appropriate."
@@ -1057,7 +1059,22 @@ def score_value_haul(payload: dict, config: dict, gateway_key: str, gemini_clien
     return None
 
 
+def is_value_haul_path_watch(watch: dict) -> bool:
+    """Watches whose hunt-fits may seed Path B value-haul closet evaluation."""
+    target = (watch.get("target_type") or "").lower()
+    name = (watch.get("name") or "").lower()
+    if any(token in target for token in ("sneaker", "knit", "cashmere")):
+        return False
+    if "maternity" in target or "maternity" in name or "mama" in name:
+        return True
+    return any(
+        token in target
+        for token in ("gym", "training", "sport", "running", "compression")
+    )
+
+
 def is_mens_gym_watch(watch: dict) -> bool:
+    """Back-compat: men's gym Path B eligibility (excludes maternity)."""
     target = (watch.get("target_type") or "").lower()
     if any(token in target for token in ("maternity", "sneaker", "knit", "cashmere")):
         return False
@@ -1319,7 +1336,7 @@ def main() -> None:
         })
         meta["trigger_items"].append(seed["trigger_item"])
     for row in scored:
-        if row["score"].get("hunt_fit") is not True or not is_mens_gym_watch(row["watch_obj"]):
+        if row["score"].get("hunt_fit") is not True or not is_value_haul_path_watch(row["watch_obj"]):
             continue
         sid = seller_id(row["item"])
         if sid is None:

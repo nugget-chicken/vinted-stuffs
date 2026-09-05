@@ -77,6 +77,40 @@ class PrefilterTests(unittest.TestCase):
         self.assertIn(3, ids)
         self.assertNotIn(4, ids)
 
+    def test_maternity_prefilter_accepts_mama_rejects_gym(self):
+        mat_watch = {
+            "target_sizes": ["L", "XL"],
+            "target_type": "women's maternity clothing",
+            "name": "H&M Mama bundle seed L-XL",
+            "notes": "H&M Mama Next ASOS maternity",
+        }
+        items = [
+            item(1, "H&M Mama nursing top", brand="H&M", size="L", price="25"),
+            item(2, "Nike training tee", brand="Nike", size="L", price="20"),
+            item(3, "Seraphine maternity dress", brand="Seraphine", size="XL", price="40"),
+        ]
+        out = vh.prefilter_candidates(items, mat_watch, {"value_haul": VH})
+        ids = [x["id"] for x in out]
+        self.assertIn(1, ids)
+        self.assertIn(3, ids)
+        self.assertNotIn(2, ids)
+
+    def test_maternity_prompt_mentions_nursing(self):
+        payload = vh.build_haul_payload(
+            "seller",
+            "ro",
+            25.0,
+            [item(1, "H&M Mama top", brand="H&M", size="L")],
+            {
+                "target_type": "women's maternity clothing",
+                "target_sizes": ["L", "XL"],
+                "notes": "Mama",
+            },
+        )
+        prompt = vh.value_haul_prompt(payload, VH)
+        self.assertIn("maternity", prompt.lower())
+        self.assertIn("nursing", prompt.lower())
+
 
 class FingerprintTests(unittest.TestCase):
     def test_fingerprint_sorted_useful_only(self):

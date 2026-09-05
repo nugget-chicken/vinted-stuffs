@@ -87,6 +87,31 @@ class KeepRuleTests(unittest.TestCase):
         }
         self.assertFalse(bot.is_keep(score, CONFIG, watch, item))
 
+    def test_maternity_score_8_is_keep_when_watch_allows(self):
+        item = {"price": {"amount": "150", "currency_code": "RON"}}
+        score = {
+            "deal_score": 8,
+            "value_band": "hunt",
+            "hunt_fit": True,
+            "scam_risk": "low",
+        }
+        watch = {
+            "target_type": "women's premium maternity clothing",
+            "min_deal_score": 8,
+        }
+        self.assertTrue(bot.is_keep(score, CONFIG, watch, item))
+
+    def test_value_haul_path_includes_maternity_excludes_sneakers(self):
+        self.assertTrue(
+            bot.is_value_haul_path_watch({"target_type": "women's premium maternity clothing"})
+        )
+        self.assertTrue(
+            bot.is_value_haul_path_watch({"target_type": "men's gym clothing"})
+        )
+        self.assertFalse(
+            bot.is_value_haul_path_watch({"target_type": "men's sneakers"})
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

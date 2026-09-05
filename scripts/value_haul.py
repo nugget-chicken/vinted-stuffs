@@ -12,6 +12,13 @@ GYM_TOKENS = (
     "ten thousand", "compression", "dry-fit", "dri-fit", "tech tee",
 )
 
+MATERNITY_TOKENS = (
+    "maternity", "mama", "nursing", "pregnancy", "pregnant", "bump",
+    "seraphine", "isabella oliver", "noppies", "mamalicious", "boob",
+    "ripe", "hatch", "storq", "asos maternity", "next maternity",
+    "jojo maman", "envie de fraise", "tiffany rose", "pietro brunelli",
+)
+
 
 def value_haul_config(config: dict) -> dict:
     defaults = {
@@ -50,19 +57,40 @@ def size_matches(item: dict, target_sizes: list[str]) -> bool:
     )
 
 
-def looks_like_gymwear(item: dict, watch: dict) -> bool:
+def is_maternity_watch(watch: dict) -> bool:
+    target = (watch.get("target_type") or "").lower()
+    name = (watch.get("name") or "").lower()
+    return "maternity" in target or "maternity" in name or "mama" in name
+
+
+def looks_like_haul_fit(item: dict, watch: dict) -> bool:
+    """Cheap prefilter: gymwear or maternity pieces matching the haul watch."""
     blob = f"{item.get('title') or ''} {item.get('brand_title') or ''}".lower()
-    if any(tok in blob for tok in GYM_TOKENS):
-        return True
     notes = (watch.get("notes") or "").lower()
     for word in notes.replace(",", " ").split():
         if len(word) >= 4 and word in blob:
             return True
     target = (watch.get("target_type") or "").lower()
+    if is_maternity_watch(watch):
+        if any(tok in blob for tok in MATERNITY_TOKENS):
+            return True
+        # Notes often list brands (Mama, Seraphine, …); require a real brand hit,
+        # not a generic garment word like "tee" alone.
+        return False
+    if any(tok in blob for tok in GYM_TOKENS):
+        return True
     if "gym" in target or "training" in target or "sport" in target:
-        if any(w in blob for w in ("tee", "t-shirt", "short", "legging", "hoodie", "tank", "top", "póló", "tricou")):
+        if any(
+            w in blob
+            for w in ("tee", "t-shirt", "short", "legging", "hoodie", "tank", "top", "póló", "tricou")
+        ):
             return True
     return False
+
+
+def looks_like_gymwear(item: dict, watch: dict) -> bool:
+    """Back-compat alias for gym-oriented haul prefilter."""
+    return looks_like_haul_fit(item, watch)
 
 
 def rough_delivered_per_item(items: list, checkout_extra: float) -> float | None:
@@ -97,11 +125,13 @@ def prefilter_candidates(items: list, watch: dict, config: dict) -> list:
             continue
         if not size_matches(it, sizes):
             continue
-        if not looks_like_gymwear(it, watch):
+        if not looks_like_haul_fit(it, watch):
             continue
         title = (it.get("title") or "").lower()
         brand = (it.get("brand_title") or "").lower()
-        fit = sum(1 for tok in GYM_TOKENS if tok in f"{title} {brand}")
+        blob = f"{title} {brand}"
+        tokens = MATERNITY_TOKENS if is_maternity_watch(watch) else GYM_TOKENS
+        fit = sum(1 for tok in tokens if tok in blob)
         price = _listing_amount(it) or 9999
         scored.append((fit, -price, it))
     scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
@@ -145,6 +175,24 @@ def value_haul_prompt(payload: dict, vh: dict) -> str:
     strong = vh.get("strong_max_delivered_per_item_ron", 30)
     excellent = vh.get("excellent_max_delivered_per_item_ron", 25)
     steal = vh.get("steal_max_delivered_per_item_ron", 20)
+    hunt = (payload.get("hunt") or {})
+    maternity = is_maternity_watch(hunt) or "maternity" in str(hunt.get("target_type") or "").lower()
+    if maternity:
+        use_line = (
+            "the pieces are genuinely usable for pregnancy and/or postpartum/nursing wardrobe building"
+        )
+        brand_line = "For ordinary maternity brands (H&M Mama, Next, ASOS Maternity, etc.):"
+        reject_line = (
+            "Reject bundles where the apparent low price is achieved by including wrong sizes, "
+            "worn-out pieces, non-maternity filler, men's/kids items, or pieces the buyer is unlikely to use."
+        )
+    else:
+        use_line = "the pieces are genuinely usable for gym/training"
+        brand_line = "For ordinary gym brands:"
+        reject_line = (
+            "Reject bundles where the apparent low price is achieved by including wrong sizes, "
+            "worn-out pieces, casual cotton tees with little gym value, or items the buyer is unlikely to use."
+        )
     return f"""This is a BUNDLE / value haul hunt.
 
 Do not judge the items only by individual resale value.
@@ -154,16 +202,15 @@ A bundle can be an outstanding deal when:
 - one shipping charge covers the order
 - total delivered cost per useful item is low
 - condition is very good or better
-- the pieces are genuinely usable for gym/training
+- {use_line}
 - there is little filler or junk
 
-For ordinary gym brands:
+{brand_line}
 - under ~{strong} RON delivered per useful item = strong (value_band hunt if score high enough)
 - under ~{excellent} RON = excellent
 - around ~{steal} RON or less = steal
 
-Reject bundles where the apparent low price is achieved by including wrong sizes,
-worn-out pieces, casual cotton tees with little gym value, or items the buyer is unlikely to use.
+{reject_line}
 
 Return ONE JSON object:
 {{
