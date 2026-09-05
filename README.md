@@ -1,42 +1,77 @@
 vinted deal bot
 
-Watches Vinted for men's M/L running kit on `ro` (Craft, Odlo, 2XU, UA Rush, Nike Dri-FIT ADV, Adizero, Gore). Scores deal quality and scam risk on anything new, and pushes an alert to your phone via ntfy. Runs locally or on GitHub Actions.
+Hunts Vinted (men's gym / sneakers / knit + maternity L–XL), scores with Vercel AI Gateway, alerts via ntfy, and writes `data/*.json` for the dashboard. Cron runs on **GitHub Actions**; the **dashboard deploys to Vercel** and can trigger those runs.
 
-Search uses **vinted-mcp-cli** (sibling checkout, or `npx @googlarz/vinted-client`). Scoring uses **Vercel AI Gateway** first (`AI_GATEWAY_API_KEY`), then **Gemini** if that fails. Cursor `/vinted` is the interactive hunter — do not point this cron at the Cursor Agent SDK.
+Search uses **vinted-mcp-cli** (sibling checkout, `npx @googlarz/vinted-client`, or Actions install). Scoring uses **Vercel AI Gateway** first, then optional Gemini. Do not point the cron at the Cursor Agent SDK.
 
-how it works
+## Architecture
 
-Every 15 min: search each watch in config.json -> drop anything already seen -> pull each new seller's profile -> score deal (1-10) + scam risk -> alert on anything past `min_deal_score` that isn't high risk -> mark everything as seen either way.
+| Piece | Where | Role |
+|---|---|---|
+| `scripts/vinted_bot.py` | local / GitHub Actions | Search, score, bundles, ntfy, commit `data/` |
+| `.github/workflows/vinted-bot.yml` | GitHub | Every 15 min + manual / dashboard trigger |
+| `dashboard/` + `api/` | Vercel | Filterable finds, bundles, top sellers, Run hunt |
 
-`price_to` is only a search filter. The model decides if the price is actually a deal.
+Vercel does **not** scrape Vinted (too slow / blocked). It reads committed JSON from GitHub and dispatches the Actions workflow.
 
-setup
+## Local bot
 
 ```bash
 set -a && source .env && set +a
-python scripts/vinted_bot.py
+uv run python scripts/vinted_bot.py
+# one-shot backfill:
+FULL_SWEEP=1 uv run python scripts/vinted_bot.py
 ```
 
-Repo secrets on your fork (Actions):
+Local dashboard (filesystem data):
 
-- `AI_GATEWAY_API_KEY` — Vercel AI Gateway key
-- `NTFY_TOPIC` — long random name; subscribe in the ntfy app
-- `GEMINI_API_KEY` — optional fallback
+```bash
+uv run python scripts/serve_dashboard.py
+# → http://127.0.0.1:8765/
+```
 
-Optional variable: `AI_GATEWAY_MODEL` (default `google/gemini-2.5-flash`).
+## Deploy dashboard to Vercel
 
-Need at least one scorer key unless you run test mode. Set Actions → General → Workflow permissions to **Read and write** so the workflow can commit `data/seen_listings.json`.
+```bash
+cd /path/to/vinted-stuffs
+npx vercel
+```
 
-config.json
+Vercel project env vars (Production):
 
-`query` is required. `market` is a Vinted country code (`ro`, `hu`, `pl`, …). Men's clothing is `category_id` 5; men's M/L sizes are `208` and `209`.
+| Var | Purpose |
+|---|---|
+| `GITHUB_TOKEN` | PAT: `repo` + `actions:write` (or fine-grained Contents read + Actions write) |
+| `GITHUB_REPO` | `owner/repo` e.g. `rolki-png/vinted-stuffs` |
+| `GITHUB_REF` | usually `main` |
+| `GITHUB_WORKFLOW` | `vinted-bot.yml` |
+| `DASHBOARD_SECRET` | long random string — paste into the dashboard UI to Run hunt |
+| `CRON_SECRET` | optional; Vercel Cron sends it as `Authorization: Bearer …` |
 
-test mode
+GitHub Actions secrets (unchanged): `AI_GATEWAY_API_KEY`, `NTFY_TOPIC`, optional `GEMINI_API_KEY`. Repo variable `AI_GATEWAY_MODEL` optional.
 
-`SKIP_SCORING=1` (or Actions → Run workflow → Test mode) skips the LLM and fake-passes every new listing. Use that only to check ntfy — it will alert everything new.
+After deploy: open the Vercel URL → enter `DASHBOARD_SECRET` → **Run hunt** (or **Full sweep**). Data updates when Actions commits `data/*`; hit Refresh.
 
-known limits
+### Schedulers
+
+1. **Primary:** GitHub Actions `*/15 * * * *` (already in the workflow).
+2. **Optional backup:** Vercel Cron hits `/api/cron` hourly (`vercel.json`). Hobby plans may only allow daily cron — keep GitHub as the real 15‑min schedule.
+
+## Dashboard features
+
+- Finds: filter by hunt / band / score / source, sort by score / price / date
+- Bundles and top sellers (once seller ids are in the pool / keeps)
+- Runs tab: last score histogram + recent Actions runs
+- Trigger buttons dispatch `workflow_dispatch` on the hunt workflow
+
+## Config notes
+
+- Omit `price_from` — high-recall search; the scorer judges cheap listings.
+- Ordinary clothing ≤ 100 RON is not a solo keep unless `value_band` is `steal`.
+- `FULL_SWEEP=1` / dashboard Full sweep: paginate hunts, no 10-item cap.
+
+## Known limits
 
 - Search results have no description, so "pay outside the app" will not show up.
-- Missing seller history is treated as elevated risk.
-- GitHub-hosted runners may get blocked by Vinted; a local or self-hosted run is more reliable.
+- Missing seller history is elevated scam risk.
+- GitHub-hosted runners may get DataDome-blocked; local or self-hosted is more reliable for sweeps.

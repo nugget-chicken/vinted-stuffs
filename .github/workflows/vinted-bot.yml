@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       skip_scoring:
-        description: "Test mode: skip LLM scoring, fake-pass every new listing to check search/dedup/ntfy"
+        description: "Test mode: skip LLM scoring, fake-pass every new listing"
+        type: boolean
+        default: false
+      full_sweep:
+        description: "Paginate every hunt and score all unseen (slow, expensive)"
         type: boolean
         default: false
 
@@ -16,6 +20,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   run-bot:
@@ -37,6 +42,9 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r scripts/requirements.txt
 
+      - name: Install Vinted CLI
+        run: npm install --no-save @googlarz/vinted-client@^1.1.5
+
       - name: Run bot
         env:
           AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
@@ -44,15 +52,17 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           SKIP_SCORING: ${{ inputs.skip_scoring }}
+          FULL_SWEEP: ${{ inputs.full_sweep }}
+          VINTED_BIN: ${{ github.workspace }}/node_modules/@googlarz/vinted-client/dist/cli.js
         run: python scripts/vinted_bot.py
 
       - name: Commit updated state
         run: |
           git config user.name "vinted-bot"
           git config user.email "vinted-bot@users.noreply.github.com"
-          git add data/seen_listings.json
+          git add data/seen_listings.json data/best_deals.json data/best_bundles.json data/bundle_pool.json data/last_run.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update dedup state [skip ci]"
+            git commit -m "Update hunt state [skip ci]"
             git push
           else
             echo "No state changes to commit"

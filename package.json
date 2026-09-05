@@ -1,0 +1,8 @@
+{
+  "name": "vinted-stuffs",
+  "private": true,
+  "description": "Vinted hunt dashboard (static) + serverless trigger/snapshot APIs",
+  "engines": {
+    "node": ">=20"
+  }
+}

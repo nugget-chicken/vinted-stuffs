@@ -1,76 +1,492 @@
 {
-  "max_new_items_per_run": 8,
+  "min_deal_score": 8,
+  "require_hunt_fit": true,
+  "keep_value_bands": [
+    "steal",
+    "hunt"
+  ],
+  "max_keeps_per_run": 8,
+  "max_bundles_per_run": 3,
+  "max_new_items_per_watch": 10,
+  "solo_floor_clothing_ron": 100,
+  "bundle_extra_min_score": 6,
+  "closet_crawl_limit": 12,
+  "checkout_extra_ron": {
+    "ro": 25,
+    "hu": 40,
+    "pl": 40,
+    "default": 25
+  },
   "watches": [
     {
-      "name": "craft-adv-ml-ro",
-      "query": "Craft ADV",
-      "market": "ro",
-      "price_from": 10,
-      "price_to": 60,
-      "category_id": 5,
-      "size_ids": [208, 209],
-      "min_deal_score": 7
+      "name": "Lululemon gym M-L",
+      "query": "lululemon",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 250,
+      "hunt_price": 150,
+      "target_type": "men's gym clothing",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Prioritise Pace Breaker, License to Train, Metal Vent Tech and other technical training lines. Generic casual pieces are weaker."
     },
     {
-      "name": "odlo-performance-ml-ro",
-      "query": "Odlo Performance",
-      "market": "ro",
-      "price_from": 10,
-      "price_to": 90,
-      "category_id": 5,
-      "size_ids": [208, 209],
-      "min_deal_score": 7
+      "name": "Ten Thousand gym M-L",
+      "query": "ten thousand",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 250,
+      "hunt_price": 150,
+      "target_type": "men's gym clothing",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Interval, Session, Tactical and other genuine Ten Thousand training pieces."
     },
     {
-      "name": "2xu-compression-ml-ro",
-      "query": "2XU compression",
-      "market": "ro",
-      "price_from": 20,
-      "price_to": 120,
-      "category_id": 5,
-      "size_ids": [208, 209],
-      "min_deal_score": 7
+      "name": "Vuori gym M-L",
+      "query": "vuori",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 250,
+      "hunt_price": 150,
+      "target_type": "men's gym clothing",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Technical tees, shorts and pants. Prefer Kore, Strato, Sunday Performance."
     },
     {
-      "name": "ua-rush-ml-ro",
-      "query": "Under Armour Rush",
-      "market": "ro",
-      "price_from": 10,
-      "price_to": 70,
-      "category_id": 5,
-      "size_ids": [208, 209],
-      "min_deal_score": 7
+      "name": "Craft ADV M-L",
+      "query": "craft adv",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 180,
+      "hunt_price": 110,
+      "target_type": "men's technical gym or running clothing",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "ADV and PRO lines strongly preferred. Cheap basic Craft pieces are not enough on their own."
     },
     {
-      "name": "nike-dri-fit-adv-ml-ro",
-      "query": "Nike Dri-FIT ADV",
-      "market": "ro",
-      "price_from": 15,
-      "price_to": 120,
-      "category_id": 5,
-      "size_ids": [208, 209],
-      "min_deal_score": 7
+      "name": "Odlo technical M-L",
+      "query": "odlo",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 200,
+      "hunt_price": 120,
+      "target_type": "men's technical gym, running or base-layer clothing",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Performance, Zeroweight, Blackcomb and premium technical lines preferred."
     },
     {
-      "name": "adidas-adizero-ml-ro",
-      "query": "Adizero",
-      "market": "ro",
-      "price_from": 10,
-      "price_to": 90,
-      "category_id": 5,
-      "size_ids": [208, 209],
-      "brand_ids": [14],
-      "min_deal_score": 7
+      "name": "GOREWEAR M-L",
+      "query": "gorewear",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 240,
+      "hunt_price": 150,
+      "target_type": "men's technical training or running clothing",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Prioritise genuinely technical pieces over basic logo tees."
     },
     {
-      "name": "gore-running-ml-ro",
-      "query": "Gore Running",
-      "market": "ro",
-      "price_from": 15,
-      "price_to": 120,
-      "category_id": 5,
-      "size_ids": [208, 209],
-      "min_deal_score": 7
+      "name": "2XU M-L",
+      "query": "2xu",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 220,
+      "hunt_price": 140,
+      "target_type": "men's training and compression clothing",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Compression tights, shorts and technical tops. Excellent condition required."
+    },
+    {
+      "name": "New Balance 990 size 43",
+      "query": "new balance 990",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 500,
+      "hunt_price": 320,
+      "target_type": "men's sneakers",
+      "target_sizes": [
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
+      "notes": "Prefer Made in USA 990v4, v5 or v6. Condition and sole wear matter heavily. Reject suspicious fakes."
+    },
+    {
+      "name": "New Balance 991 size 43",
+      "query": "new balance 991",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 550,
+      "hunt_price": 350,
+      "target_type": "men's sneakers",
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
+      "notes": "Made in UK models preferred. Strong authenticity check required."
+    },
+    {
+      "name": "New Balance 993 size 43",
+      "query": "new balance 993",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 550,
+      "hunt_price": 350,
+      "target_type": "men's sneakers",
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
+      "notes": "Made in USA. Reject heavily worn heel, outsole or lining."
+    },
+    {
+      "name": "ASICS Gel Kayano 14 size 43",
+      "query": "gel kayano 14",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 450,
+      "hunt_price": 290,
+      "target_type": "men's or unisex sneakers",
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
+      "notes": "Authenticity is important because this model is frequently replicated."
+    },
+    {
+      "name": "ASICS GT-2160 size 43",
+      "query": "gt 2160",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 380,
+      "hunt_price": 250,
+      "target_type": "men's or unisex sneakers",
+      "target_sizes": [
+        "42.5",
+        "43",
+        "43.5",
+        "43 1/3"
+      ],
+      "notes": "Good condition and meaningful discount required."
+    },
+    {
+      "name": "John Smedley M-L",
+      "query": "john smedley",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 350,
+      "hunt_price": 200,
+      "target_type": "men's premium knitwear or polo",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Fine-gauge merino preferred. Inspect for moth holes, shrinkage, stains and stretched cuffs."
+    },
+    {
+      "name": "William Lockie M-L",
+      "query": "william lockie",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 400,
+      "hunt_price": 230,
+      "target_type": "men's premium knitwear",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Cashmere, Geelong and lambswool. Material and condition matter more than low price."
+    },
+    {
+      "name": "Gran Sasso M-L",
+      "query": "gran sasso",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 320,
+      "hunt_price": 190,
+      "target_type": "men's premium knitwear or knit polo",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Merino and high-quality Italian knitwear preferred."
+    },
+    {
+      "name": "Fedeli M-L",
+      "query": "fedeli",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 450,
+      "hunt_price": 260,
+      "target_type": "men's premium knitwear, polo or T-shirt",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Merino, cashmere and premium cotton. Strong condition required."
+    },
+    {
+      "name": "Sunspel M-L",
+      "query": "sunspel",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 280,
+      "hunt_price": 160,
+      "target_type": "men's premium T-shirt, polo or knitwear",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Classic premium T-shirts, polos and merino pieces. Avoid underwear unless unusually compelling."
+    },
+    {
+      "name": "Icebreaker merino M-L",
+      "query": "icebreaker merino",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 260,
+      "hunt_price": 150,
+      "target_type": "men's merino T-shirt, long sleeve or technical layer",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "High merino content preferred. Check holes and excessive pilling."
+    },
+    {
+      "name": "Devold merino M-L",
+      "query": "devold",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 260,
+      "hunt_price": 150,
+      "target_type": "men's merino T-shirt, long sleeve or technical layer",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Prioritise genuine high-merino technical pieces."
+    },
+    {
+      "name": "Cashmere wildcard M-L",
+      "query": "100% cashmere",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 30,
+      "price_to": 400,
+      "hunt_price": 230,
+      "min_deal_score": 9,
+      "target_type": "men's premium 100% cashmere knitwear",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Only genuinely high-quality cashmere from a credible maker. Reject anonymous low-grade cashmere, blends presented as pure cashmere, moth damage or shrinkage."
+    },
+    {
+      "name": "Seraphine maternity L-XL",
+      "query": "seraphine maternity",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 30,
+      "price_to": 350,
+      "hunt_price": 190,
+      "target_type": "women's premium maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "High-priority brand. Prioritise maternity dresses, workwear, coats, knitwear, trousers and premium nursing-compatible maternity pieces. Strong preference for pieces originally expensive enough to justify shipping."
+    },
+    {
+      "name": "Isabella Oliver maternity L-XL",
+      "query": "isabella oliver",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 30,
+      "price_to": 380,
+      "hunt_price": 200,
+      "target_type": "women's premium maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "High-priority premium maternity brand. Dresses, knitwear, tops and tailored maternity pieces are especially interesting. Reject ordinary non-maternity Isabella Oliver pieces unless explicitly suitable for pregnancy."
+    },
+    {
+      "name": "Pietro Brunelli maternity L-XL",
+      "query": "pietro brunelli",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 450,
+      "hunt_price": 240,
+      "target_type": "women's premium maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Premium Italian maternity brand. Prioritise dresses, trousers, coats and smart maternity clothing. Excellent condition required."
+    },
+    {
+      "name": "Tiffany Rose maternity dress L-XL",
+      "query": "tiffany rose maternity",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 500,
+      "hunt_price": 260,
+      "target_type": "women's premium maternity occasion dress",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Only maternity occasion dresses. Original retail can be high, so substantial absolute savings matter. Condition must be excellent, with no stains, pulls or damaged lace."
+    },
+    {
+      "name": "Boob Design maternity L-XL",
+      "query": "boob design",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 350,
+      "hunt_price": 200,
+      "target_type": "women's premium maternity and nursing clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "High priority when the piece works during pregnancy and later for nursing. Merino, wool, dresses, sweatshirts and technical maternity/nursing garments are particularly valuable."
+    },
+    {
+      "name": "Ripe Maternity L-XL",
+      "query": "ripe maternity",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 24,
+      "price_to": 300,
+      "hunt_price": 170,
+      "target_type": "women's maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Prioritise versatile maternity dresses, trousers, knitwear and pieces that also work postpartum or for nursing. Avoid low-value basic tees unless bundled."
+    },
+    {
+      "name": "Noppies maternity L-XL",
+      "query": "noppies maternity",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 30,
+      "price_to": 260,
+      "hunt_price": 150,
+      "target_type": "women's maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Good quality everyday maternity brand. Dresses, trousers, jeans, knitwear and jackets preferred. Basic low-cost tops should only score highly if bundled or unusually good."
+    },
+    {
+      "name": "Mamalicious maternity L-XL",
+      "query": "mamalicious",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 30,
+      "price_to": 220,
+      "hunt_price": 120,
+      "target_type": "women's maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "The buyer already likes Mamalicious. Prioritise dresses, trousers, leggings, knitwear, blouses, jumpsuits and outerwear. A cheap basic T-shirt alone is not an outstanding deal because shipping and Vinted fees make low-value purchases unattractive. Prefer excellent condition, bundles, or substantial pieces."
+    },
+    {
+      "name": "Envie de Fraise maternity L-XL",
+      "query": "envie de fraise",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 30,
+      "price_to": 280,
+      "hunt_price": 150,
+      "target_type": "women's maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Prioritise dresses, trousers, blouses and maternity-specific pieces. Avoid generic low-value tops unless part of a bundle."
+    },
+    {
+      "name": "JoJo Maman Bebe maternity L-XL",
+      "query": "jojo maman bebe maternity",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 30,
+      "price_to": 280,
+      "hunt_price": 150,
+      "target_type": "women's maternity clothing",
+      "target_sizes": [
+        "L",
+        "XL",
+        "L/XL"
+      ],
+      "notes": "Good practical maternity wear. Prioritise dresses, jeans, trousers, knitwear, dungarees and outerwear. Low-value basics should not trigger alerts individually."
     }
   ]
 }
