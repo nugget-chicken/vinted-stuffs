@@ -234,12 +234,12 @@
       "per_page": 24,
       "price_to": 250,
       "hunt_price": 150,
-      "target_type": "men's gym clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Prioritise Pace Breaker, License to Train, Metal Vent Tech and other technical training lines. A merely good Craft-tier alternative should lose to a true Lululemon steal. Generic casual pieces are skips."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Prioritise Pace Breaker, License to Train, Metal Vent Tech and other technical training lines. A merely good Craft-tier alternative should lose to a true Lululemon steal. Generic casual pieces are skips."
     },
     {
       "name": "Ten Thousand gym M-L",
@@ -249,12 +249,12 @@
       "per_page": 24,
       "price_to": 250,
       "hunt_price": 150,
-      "target_type": "men's gym clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Interval, Session, Tactical and other genuine Ten Thousand training pieces only."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Interval, Session, Tactical and other genuine Ten Thousand training pieces only."
     },
     {
       "name": "Rhone gym M-L",
@@ -264,12 +264,12 @@
       "per_page": 24,
       "price_to": 250,
       "hunt_price": 150,
-      "target_type": "men's gym clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Premium technical training apparel. Prefer Reign, Commuter and similar lines in excellent condition."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Premium technical training apparel. Prefer Reign, Commuter and similar lines in excellent condition."
     },
     {
       "name": "Vuori gym M-L",
@@ -279,12 +279,12 @@
       "per_page": 24,
       "price_to": 250,
       "hunt_price": 150,
-      "target_type": "men's gym clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Technical tees, shorts and pants. Prefer Kore, Strato, Sunday Performance."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Technical tees, shorts and pants. Prefer Kore, Strato, Sunday Performance."
     },
     {
       "name": "Tracksmith gym M-L",
@@ -294,12 +294,12 @@
       "per_page": 24,
       "price_to": 280,
       "hunt_price": 170,
-      "target_type": "men's gym or running clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Premium running/training pieces only. Strong absolute saving vs new required."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Premium running/training pieces only. Strong absolute saving vs new required."
     },
     {
       "name": "Saysky running M-L",
@@ -309,12 +309,12 @@
       "per_page": 24,
       "price_to": 220,
       "hunt_price": 130,
-      "target_type": "men's technical running clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Technical running pieces with meaningful discount. Skip basic logo tees."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Technical running pieces with meaningful discount. Skip basic logo tees."
     },
     {
       "name": "Falke ESS M-L",
@@ -324,12 +324,12 @@
       "per_page": 24,
       "price_to": 220,
       "hunt_price": 130,
-      "target_type": "men's technical training or running clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Falke ESS / technical performance lines only. Ordinary socks alone are not a keep."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Falke ESS / technical performance lines only. Ordinary socks alone are not a keep."
     },
     {
       "name": "Craft ADV M-L",
@@ -339,12 +339,12 @@
       "per_page": 24,
       "price_to": 180,
       "hunt_price": 110,
-      "target_type": "men's technical gym or running clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "ADV and PRO lines only. A merely good 120 RON Craft tee is a skip — wait for exceptional steals or better brands."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. ADV and PRO lines only. A merely good 120 RON Craft tee is a skip — wait for exceptional steals or better brands."
     },
     {
       "name": "Odlo technical M-L",
@@ -354,12 +354,12 @@
       "per_page": 24,
       "price_to": 200,
       "hunt_price": 120,
-      "target_type": "men's technical gym, running or base-layer clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Performance, Zeroweight, Blackcomb and premium technical lines preferred. Skip ordinary basics."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Performance, Zeroweight, Blackcomb and premium technical lines preferred. Skip ordinary basics."
     },
     {
       "name": "GOREWEAR M-L",
@@ -369,12 +369,12 @@
       "per_page": 24,
       "price_to": 240,
       "hunt_price": 150,
-      "target_type": "men's technical training or running clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Genuinely technical pieces only — not basic logo tees."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Genuinely technical pieces only — not basic logo tees."
     },
     {
       "name": "2XU M-L",
@@ -384,12 +384,12 @@
       "per_page": 24,
       "price_to": 220,
       "hunt_price": 140,
-      "target_type": "men's training and compression clothing",
+      "target_type": "men's gym or training clothing (shorts preferred, then tees/pants)",
       "target_sizes": [
         "M",
         "L"
       ],
-      "notes": "Compression tights, shorts and technical tops. Excellent condition required."
+      "notes": "Prioritise shorts when present; then technical tees and training pants. Compression tights, shorts and technical tops. Excellent condition required."
     },
     {
       "name": "New Balance 990 size 43",
