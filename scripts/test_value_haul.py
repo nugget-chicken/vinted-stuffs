@@ -5,7 +5,7 @@ import value_haul as vh
 VH = {
     "min_items": 3,
     "min_items_steal": 2,
-    "steal_max_delivered_per_item_ron": 20,
+    "steal_max_delivered_per_item_ron": 30,
     "max_candidates_to_score": 12,
 }
 WATCH = {
@@ -28,10 +28,17 @@ def item(iid, title, brand="H&M", size="M", price="20"):
 
 class GateTests(unittest.TestCase):
     def test_three_candidates_pass(self):
-        self.assertTrue(vh.passes_value_haul_gate(3, 40.0, VH))
+        self.assertTrue(vh.passes_value_haul_gate(3, 28.0, VH))
+
+    def test_three_expensive_fail(self):
+        self.assertFalse(vh.passes_value_haul_gate(3, 50.0, VH))
 
     def test_two_cheap_pass(self):
         self.assertTrue(vh.passes_value_haul_gate(2, 18.0, VH))
+
+    def test_two_near_fee_inclusive_pass(self):
+        # Real H&M Sport haul was ~21 RON/item delivered; gate must clear that.
+        self.assertTrue(vh.passes_value_haul_gate(2, 22.0, VH))
 
     def test_two_expensive_fail(self):
         self.assertFalse(vh.passes_value_haul_gate(2, 35.0, VH))

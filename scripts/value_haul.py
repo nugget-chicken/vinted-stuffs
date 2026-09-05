@@ -13,16 +13,17 @@ GYM_TOKENS = (
 )
 
 GYM_GARMENTS = (
-    "tee", "t-shirt", "tshirt", "short", "legging", "hoodie", "tank",
-    "top", "póló", "polo", "tricou", "hanorac", "bluza", "sweat",
-    "jogg", "train", "sport", "move", "dry", "compress", "koszulka",
+    "tee", "t-shirt", "tshirt", "short", "spoden", "legging", "leggins",
+    "hoodie", "tank", "top", "póló", "polo", "tricou", "hanorac", "bluza",
+    "sweat", "jogg", "train", "sport", "move", "dry", "compress", "koszulka",
 )
 
 GYM_REJECT = (
     "blazer", "marynarka", "jeans", "blugi", "sukienka", "dress", "skirt",
     "spódnic", "shoe", "buty", "sneakers", "heel", "loafer", "bag",
     "geacă", "jacket", "coat", "płaszcz", "marynark", "koszula eleg",
-    "stanik", "bra ", " bra", "biustonosz",
+    "stanik", "bra ", " bra", "biustonosz", "bustier", "kimono",
+    "push up", "push-up", "sport bh", "sport-bh",
 )
 
 MATERNITY_TOKENS = (
@@ -37,7 +38,7 @@ def value_haul_config(config: dict) -> dict:
     defaults = {
         "min_items": 3,
         "min_items_steal": 2,
-        "steal_max_delivered_per_item_ron": 20,
+        "steal_max_delivered_per_item_ron": 30,
         "strong_max_delivered_per_item_ron": 30,
         "excellent_max_delivered_per_item_ron": 25,
         "closet_crawl_limit": 36,
@@ -47,6 +48,7 @@ def value_haul_config(config: dict) -> dict:
         "max_value_hauls_per_run": 3,
         "max_closet_sellers": 40,
         "max_seeds_per_watch": 25,
+        "max_candidate_price_ron": 40,
     }
     merged = dict(defaults)
     merged.update(config.get("value_haul") or {})
@@ -145,8 +147,13 @@ def rough_delivered_per_item(items: list, checkout_extra: float) -> float | None
 def passes_value_haul_gate(n: int, rough_per_item: float | None, vh: dict) -> bool:
     min_items = int(vh.get("min_items", 3))
     min_steal = int(vh.get("min_items_steal", 2))
-    steal_cap = float(vh.get("steal_max_delivered_per_item_ron", 20))
-    if n >= min_items:
+    steal_cap = float(vh.get("steal_max_delivered_per_item_ron", 25))
+    strong_cap = float(vh.get("strong_max_delivered_per_item_ron", 30))
+    # 3+ items still need a sane delivered average — otherwise junk closets
+    # (kimono + hoodie) waste LLM calls and never keep.
+    if n >= min_items and rough_per_item is not None and rough_per_item <= strong_cap:
+        return True
+    if n >= min_items and rough_per_item is None:
         return True
     if n >= min_steal and rough_per_item is not None and rough_per_item <= steal_cap:
         return True
@@ -156,9 +163,18 @@ def passes_value_haul_gate(n: int, rough_per_item: float | None, vh: dict) -> bo
 def prefilter_candidates(items: list, watch: dict, config: dict) -> list:
     vh = value_haul_config(config)
     sizes = watch.get("target_sizes") or []
+    max_price = float(
+        vh.get("max_candidate_price_ron")
+        or watch.get("hunt_price")
+        or watch.get("price_to")
+        or 40
+    )
     scored = []
     for it in items:
         if _listing_amount(it) is None:
+            continue
+        price = _listing_amount(it) or 9999
+        if price > max_price:
             continue
         if not size_matches(it, sizes):
             continue
@@ -169,7 +185,6 @@ def prefilter_candidates(items: list, watch: dict, config: dict) -> list:
         blob = f"{title} {brand}"
         tokens = MATERNITY_TOKENS if is_maternity_watch(watch) else GYM_TOKENS
         fit = sum(1 for tok in tokens if tok in blob)
-        price = _listing_amount(it) or 9999
         scored.append((fit, -price, it))
     scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
     cap = int(vh.get("max_candidates_to_score", 12))
@@ -345,6 +360,8 @@ def value_haul_record(haul: dict, score: dict, useful: list, watch_name: str, ke
                 "url": it.get("url"),
                 "watch": watch_name,
                 "deal_score": score.get("deal_score"),
+                "seller": haul.get("seller") or it.get("seller"),
+                "seller_id": haul.get("seller_id") or it.get("seller_id"),
             }
             for it in useful
         ],

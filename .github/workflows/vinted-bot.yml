@@ -45,7 +45,8 @@ jobs:
       - name: Checkout Vinted CLI
         uses: actions/checkout@v4
         with:
-          repository: googlarz/vinted-mcp-cli
+          # Fork includes wardrobe closet fix (catalog?seller_id= was ignored by Vinted).
+          repository: rolki-png/vinted-mcp-cli
           path: vinted-mcp-cli
 
       - name: Build Vinted CLI

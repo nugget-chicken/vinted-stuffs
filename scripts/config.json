@@ -43,7 +43,7 @@
   "value_haul": {
     "min_items": 3,
     "min_items_steal": 2,
-    "steal_max_delivered_per_item_ron": 20,
+    "steal_max_delivered_per_item_ron": 30,
     "strong_max_delivered_per_item_ron": 30,
     "excellent_max_delivered_per_item_ron": 25,
     "closet_crawl_limit": 36,
@@ -55,7 +55,8 @@
     "max_candidates_to_score": 12,
     "max_value_hauls_per_run": 15,
     "max_closet_sellers": 40,
-    "max_seeds_per_watch": 25
+    "max_seeds_per_watch": 25,
+    "max_candidate_price_ron": 40
   },
   "watches": [
     {

@@ -1,5 +1,55 @@
 [
   {
+    "kept_at": "2026-09-05T19:56:57.208122+00:00",
+    "kind": "value_haul",
+    "seller": "anowi7777",
+    "seller_id": 94997645,
+    "country": "pl",
+    "checkout_extra_ron": 25.403,
+    "listing_sum": 48.06,
+    "checkout_total": 73.463,
+    "deal_score": 9,
+    "value_band": "steal",
+    "reason": "Three high-quality athletic tops at a price well below the steal threshold of 25 RON per item.",
+    "watch": "Gym bundle seeds M-L",
+    "effective_price_per_useful_item": 24.49,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9896983801,
+        "title": "Koszulka sportowa typu dri fit marki crivit",
+        "price": 12.32,
+        "url": "https://www.vinted.ro/items/9896983801-koszulka-sportowa-typu-dri-fit-marki-crivit",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": 9,
+        "seller": "anowi7777",
+        "seller_id": 94997645
+      },
+      {
+        "role": "haul",
+        "id": 9897049564,
+        "title": "Sportowa czarna koszulka h&m",
+        "price": 14.79,
+        "url": "https://www.vinted.ro/items/9897049564-sportowa-czarna-koszulka-hm",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": 9,
+        "seller": "anowi7777",
+        "seller_id": 94997645
+      },
+      {
+        "role": "haul",
+        "id": 9896917363,
+        "title": "Koszulka sportowa Nike typu dri-fit slim-fit",
+        "price": 20.95,
+        "url": "https://www.vinted.ro/items/9896917363-koszulka-sportowa-nike-typu-dri-fit-slim-fit",
+        "watch": "Gym bundle seeds M-L",
+        "deal_score": 9,
+        "seller": "anowi7777",
+        "seller_id": 94997645
+      }
+    ]
+  },
+  {
     "kept_at": "2026-09-05T18:45:43.426160+00:00",
     "seller": "mcsport13",
     "seller_id": 207275882,
@@ -40,7 +90,7 @@
       {
         "role": "keep",
         "id": 9344203551,
-        "title": "Gran Sasso Men\u2019s Polo Shirt Pocket 100% Cotton Old Money Casual Style Blue Size 52",
+        "title": "Gran Sasso Men’s Polo Shirt Pocket 100% Cotton Old Money Casual Style Blue Size 52",
         "price": 100.0,
         "url": "https://www.vinted.ro/items/9344203551-gran-sasso-mens-polo-shirt-pocket-100-cotton-old-money-casual-style-blue-size-52",
         "watch": "Gran Sasso M-L",
@@ -49,7 +99,7 @@
       {
         "role": "extra",
         "id": 9547215240,
-        "title": "Icebreaker Merino Bodyfit 200 Men\u2019s Pullover 1/4 Zip 100% Wool Outdoor Hiking Style Grey Size L",
+        "title": "Icebreaker Merino Bodyfit 200 Men’s Pullover 1/4 Zip 100% Wool Outdoor Hiking Style Grey Size L",
         "price": 200.0,
         "url": "https://www.vinted.ro/items/9547215240-icebreaker-merino-bodyfit-200-mens-pullover-14-zip-100-wool-outdoor-hiking-style-grey-size-l",
         "watch": "Icebreaker merino M-L",
