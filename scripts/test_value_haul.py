@@ -70,5 +70,52 @@ class PrefilterTests(unittest.TestCase):
         self.assertNotIn(4, ids)
 
 
+class PayloadAndAlertTests(unittest.TestCase):
+    def test_payload_totals(self):
+        items = [
+            item(1, "H&M Sport", price="16.67"),
+            item(2, "H&M Sport", size="L", price="16.67"),
+            item(3, "Nike tee", price="16.66"),
+        ]
+        payload = vh.build_haul_payload("robert", "hu", 40.0, items, WATCH)
+        self.assertEqual(payload["kind"], "value_haul")
+        self.assertEqual(payload["matching_items"], 3)
+        self.assertAlmostEqual(payload["total_listing_price"], 50.0, places=1)
+        self.assertAlmostEqual(payload["estimated_total"], 90.0, places=1)
+        self.assertIn("value_haul", vh.value_haul_prompt(payload, VH).lower())
+
+    def test_parse_object(self):
+        raw = '{"deal_score":9,"value_band":"steal","useful_item_count":3,"effective_price_per_useful_item":21.2,"hunt_fit":true,"scam_risk":"low","reason":"good","reject_ids":[]}'
+        score = vh.parse_value_haul_score(raw)
+        self.assertEqual(score["deal_score"], 9)
+
+    def test_alert_requires_gate_after_rejects(self):
+        items = [item(1, "a"), item(2, "b"), item(3, "c")]
+        score = {
+            "deal_score": 9,
+            "value_band": "steal",
+            "hunt_fit": True,
+            "scam_risk": "low",
+            "reject_ids": [1],
+            "effective_price_per_useful_item": 18.0,
+            "useful_item_count": 2,
+        }
+        useful = vh.useful_items(items, score)
+        self.assertEqual(len(useful), 2)
+        self.assertTrue(vh.is_value_haul_alert(score, useful, 25.0, VH))
+
+    def test_alert_rejects_high_scam(self):
+        items = [item(1, "a"), item(2, "b"), item(3, "c")]
+        score = {
+            "deal_score": 9,
+            "value_band": "steal",
+            "hunt_fit": True,
+            "scam_risk": "high",
+            "reject_ids": [],
+            "effective_price_per_useful_item": 15.0,
+        }
+        self.assertFalse(vh.is_value_haul_alert(score, items, 25.0, VH))
+
+
 if __name__ == "__main__":
     unittest.main()

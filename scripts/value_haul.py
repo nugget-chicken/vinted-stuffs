@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 GYM_TOKENS = (
     "sport", "training", "gym", "running", "workout", "fitness",
     "nike", "adidas", "lululemon", "under armour", "underarmour",
@@ -116,3 +118,124 @@ def prefilter_candidates(items: list, watch: dict, config: dict) -> list:
     scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
     cap = int(vh.get("max_candidates_to_score", 12))
     return [t[2] for t in scored[:cap]]
+
+
+def build_haul_payload(seller, seller_country, checkout_extra, items, watch):
+    listing_sum = sum(_listing_amount(it) or 0 for it in items)
+    n = len(items)
+    estimated = listing_sum + float(checkout_extra)
+    return {
+        "kind": "value_haul",
+        "seller": seller,
+        "seller_country": seller_country or "ro",
+        "checkout_extra_ron": float(checkout_extra),
+        "matching_items": n,
+        "total_listing_price": listing_sum,
+        "estimated_total": estimated,
+        "effective_price_per_item": (estimated / n) if n else None,
+        "items": [
+            {
+                "id": it.get("id"),
+                "title": it.get("title"),
+                "brand": it.get("brand_title"),
+                "size": it.get("size_title"),
+                "price": _listing_amount(it),
+                "status": it.get("status"),
+            }
+            for it in items
+        ],
+        "hunt": {
+            "target_type": watch.get("target_type"),
+            "target_sizes": watch.get("target_sizes") or [],
+            "notes": watch.get("notes") or "",
+        },
+    }
+
+
+def value_haul_prompt(payload: dict, vh: dict) -> str:
+    strong = vh.get("strong_max_delivered_per_item_ron", 30)
+    excellent = vh.get("excellent_max_delivered_per_item_ron", 25)
+    steal = vh.get("steal_max_delivered_per_item_ron", 20)
+    return f"""This is a BUNDLE / value haul hunt.
+
+Do not judge the items only by individual resale value.
+
+A bundle can be an outstanding deal when:
+- at least 3 useful pieces fit the buyer (or 2 if delivered cost per useful item is steal-level)
+- one shipping charge covers the order
+- total delivered cost per useful item is low
+- condition is very good or better
+- the pieces are genuinely usable for gym/training
+- there is little filler or junk
+
+For ordinary gym brands:
+- under ~{strong} RON delivered per useful item = strong (value_band hunt if score high enough)
+- under ~{excellent} RON = excellent
+- around ~{steal} RON or less = steal
+
+Reject bundles where the apparent low price is achieved by including wrong sizes,
+worn-out pieces, casual cotton tees with little gym value, or items the buyer is unlikely to use.
+
+Return ONE JSON object:
+{{
+  "deal_score": <1-10>,
+  "value_band": "steal"|"hunt"|"acceptable"|"skip",
+  "useful_item_count": <int>,
+  "effective_price_per_useful_item": <number>,
+  "hunt_fit": <true|false>,
+  "scam_risk": "low"|"medium"|"high",
+  "reason": "<one short sentence>",
+  "reject_ids": [<item ids that are filler/wrong>]
+}}
+
+Cart:
+{json.dumps(payload, ensure_ascii=False)}
+"""
+
+
+def parse_value_haul_score(raw: str) -> dict | None:
+    text = (raw or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.lower().startswith("json"):
+            text = text[4:].lstrip()
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    if isinstance(parsed, dict) and "deal_score" in parsed:
+        return parsed
+    if isinstance(parsed, dict):
+        for key in ("haul", "score", "result"):
+            inner = parsed.get(key)
+            if isinstance(inner, dict) and "deal_score" in inner:
+                return inner
+    return None
+
+
+def useful_items(items: list, score: dict) -> list:
+    rejected = {str(x) for x in (score.get("reject_ids") or [])}
+    return [it for it in items if str(it.get("id")) not in rejected]
+
+
+def is_value_haul_alert(score: dict, useful: list, checkout_extra: float, vh: dict) -> bool:
+    if not score or score.get("scam_risk") == "high":
+        return False
+    if score.get("hunt_fit") is not True:
+        return False
+    bands = set(vh.get("keep_value_bands") or ["steal", "hunt"])
+    if (score.get("value_band") or "skip") not in bands:
+        return False
+    try:
+        deal = int(score.get("deal_score"))
+    except (TypeError, ValueError):
+        return False
+    if deal < int(vh.get("min_deal_score", 8)):
+        return False
+    n = len(useful)
+    per = score.get("effective_price_per_useful_item")
+    try:
+        per_f = float(per) if per is not None else rough_delivered_per_item(useful, checkout_extra)
+    except (TypeError, ValueError):
+        per_f = rough_delivered_per_item(useful, checkout_extra)
+    return passes_value_haul_gate(n, per_f, vh)
