@@ -32,6 +32,21 @@ class KeepRuleTests(unittest.TestCase):
         }
         self.assertFalse(bot.is_keep(score, CONFIG, GYM, item))
 
+    def test_bundle_hunt_watch_never_keep(self):
+        item = {"price": {"amount": "200", "currency_code": "RON"}}
+        score = {
+            "deal_score": 10,
+            "value_band": "steal",
+            "hunt_fit": True,
+            "scam_risk": "low",
+        }
+        watch = {
+            "target_type": "men's gym clothing",
+            "bundle_hunt": True,
+            "min_deal_score": 8,
+        }
+        self.assertFalse(bot.is_keep(score, CONFIG, watch, item))
+
 
 if __name__ == "__main__":
     unittest.main()

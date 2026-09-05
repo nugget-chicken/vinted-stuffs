@@ -515,6 +515,8 @@ def is_clothing_solo_bound(watch: dict) -> bool:
 
 def is_keep(score: dict, config: dict, watch: dict, item: dict | None = None) -> bool:
     """True only for a true-fit, high price-quality listing that is not high-risk."""
+    if watch.get("bundle_hunt"):
+        return False
     if not score or score.get("scam_risk") == "high":
         return False
     min_score = watch.get("min_deal_score", config.get("min_deal_score", 8))
