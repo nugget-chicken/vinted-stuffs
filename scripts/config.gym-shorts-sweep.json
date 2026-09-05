@@ -1,0 +1,302 @@
+{
+  "min_deal_score": 9,
+  "require_hunt_fit": true,
+  "keep_value_bands": [
+    "steal",
+    "hunt"
+  ],
+  "max_keeps_per_run": 100,
+  "max_bundles_per_run": 10,
+  "max_new_items_per_watch": 15,
+  "solo_floor_clothing_ron": 0,
+  "bundle_extra_min_score": 7,
+  "closet_crawl_limit": 12,
+  "closet_crawl_max_sellers": 20,
+  "checkout_extra_ron": {
+    "ro": 25,
+    "hu": 30,
+    "pl": 35,
+    "default": 25
+  },
+  "checkout_fees": {
+    "ro": {
+      "estimated_shipping_ron": 15,
+      "buyer_fee_fixed_ron": 3,
+      "buyer_fee_pct": 0.05
+    },
+    "hu": {
+      "estimated_shipping_ron": 18,
+      "buyer_fee_fixed_ron": 3,
+      "buyer_fee_pct": 0.05
+    },
+    "pl": {
+      "estimated_shipping_ron": 20,
+      "buyer_fee_fixed_ron": 3,
+      "buyer_fee_pct": 0.05
+    },
+    "default": {
+      "estimated_shipping_ron": 15,
+      "buyer_fee_fixed_ron": 3,
+      "buyer_fee_pct": 0.05
+    }
+  },
+  "value_haul": {
+    "min_items": 3,
+    "min_items_steal": 2,
+    "steal_max_delivered_per_item_ron": 30,
+    "strong_max_delivered_per_item_ron": 30,
+    "excellent_max_delivered_per_item_ron": 25,
+    "closet_crawl_limit": 36,
+    "min_deal_score": 8,
+    "keep_value_bands": [
+      "steal",
+      "hunt"
+    ],
+    "max_candidates_to_score": 12,
+    "max_value_hauls_per_run": 15,
+    "max_closet_sellers": 40,
+    "max_seeds_per_watch": 25,
+    "max_candidate_price_ron": 40,
+    "max_near_hauls_per_run": 25,
+    "max_opportunity_bundles": 80,
+    "near_max_delivered_per_item_ron": 45
+  },
+  "watches": [
+    {
+      "name": "Broad gym shorts M-L",
+      "query": "short sport",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 120,
+      "hunt_price": 70,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym or training shorts",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
+    },
+    {
+      "name": "Broad training shorts M-L",
+      "query": "pantaloni scurti sport",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 120,
+      "hunt_price": 70,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym or training shorts",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
+    },
+    {
+      "name": "Broad gym short EN M-L",
+      "query": "gym shorts",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 120,
+      "hunt_price": 70,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym or training shorts",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
+    },
+    {
+      "name": "Broad dri-fit shorts M-L",
+      "query": "dri fit short",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 120,
+      "hunt_price": 70,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym or training shorts",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Prefer technical training / gym shorts in good condition. Skip kickboxing/football kits, casual cargo, and non-gym fashion shorts unless an exceptional steal. Brand-agnostic: Nike, Adidas, UA, Decathlon/Domyos, Hummel, Craft, etc. all valid."
+    },
+    {
+      "name": "Gym seed H&M Sport M-L",
+      "query": "h&m sport",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    },
+    {
+      "name": "Gym seed Nike Dri-Fit M-L",
+      "query": "nike dri fit",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    },
+    {
+      "name": "Gym seed Adidas training M-L",
+      "query": "adidas training",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    },
+    {
+      "name": "Gym seed Under Armour M-L",
+      "query": "under armour",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    },
+    {
+      "name": "Gym seed Domyos M-L",
+      "query": "domyos",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    },
+    {
+      "name": "Gym seed Hummel M-L",
+      "query": "hummel",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    },
+    {
+      "name": "Gym seed Craft M-L",
+      "query": "craft",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    },
+    {
+      "name": "Gym seed short sport M-L",
+      "query": "short sport",
+      "country": "ro",
+      "order": "newest_first",
+      "per_page": 50,
+      "price_to": 80,
+      "hunt_price": 50,
+      "bundle_hunt": true,
+      "size_ids": [
+        1739,
+        1740
+      ],
+      "target_type": "men's gym clothing suitable for building a multi-item bundle",
+      "target_sizes": [
+        "M",
+        "L"
+      ],
+      "notes": "Seeds only — never solo-alert. Prefer sellers with several useful M/L gym pieces (shorts, tees, training pants). Individual 20–50 RON items are weak alone; same-seller multi-piece + one shipping is the goal. bundle_hunt seed."
+    }
+  ]
+}
