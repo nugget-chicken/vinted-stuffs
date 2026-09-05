@@ -57,6 +57,22 @@ class BundlePoolTests(unittest.TestCase):
         bundles, _ = bot.assemble_bundles([keep, extra], CONFIG)
         self.assertEqual(bot.bundle_fingerprint(bundles[0]), "99:1,2")
 
+    def test_zero_seller_id_does_not_merge_strangers(self):
+        a = row(1, 9, "steal", 0)
+        b = row(2, 9, "steal", 0)
+        c = row(3, 7, "acceptable", 0)
+        real_keep = row(10, 9, "steal", 55)
+        real_extra = row(11, 7, "acceptable", 55)
+        bundles, solos = bot.assemble_bundles(
+            [a, b, c, real_keep, real_extra], CONFIG,
+        )
+        self.assertEqual(len(bundles), 1)
+        self.assertEqual(bundles[0]["seller_id"], 55)
+        self.assertEqual({r["item"]["id"] for r in bundles[0]["keeps"] + bundles[0]["extras"]}, {10, 11})
+        # Orphans with seller 0 are not keeps-as-bundle; may appear as solos if keep rules pass.
+        solo_ids = {r["item"]["id"] for r in solos}
+        self.assertTrue(solo_ids.isdisjoint({10, 11}))
+
 
 if __name__ == "__main__":
     unittest.main()

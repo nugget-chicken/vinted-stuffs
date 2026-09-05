@@ -128,6 +128,16 @@ def _normalize_item(raw: dict) -> dict:
         amount = price if price is not None else "?"
         currency = raw.get("currency") or ""
     seller = raw.get("seller") or raw.get("user") or {}
+    sid = None
+    login = None
+    if isinstance(seller, dict):
+        try:
+            sid = int(seller.get("id"))
+        except (TypeError, ValueError):
+            sid = None
+        if not sid or sid <= 0:
+            sid = None
+        login = seller.get("username") or seller.get("login")
     return {
         "id": raw.get("id"),
         "title": raw.get("title", ""),
@@ -138,8 +148,8 @@ def _normalize_item(raw: dict) -> dict:
         "favourite_count": raw.get("favouriteCount") or raw.get("favourite_count") or 0,
         "url": raw.get("url"),
         "user": {
-            "id": seller.get("id") if isinstance(seller, dict) else None,
-            "login": (seller.get("username") or seller.get("login")) if isinstance(seller, dict) else None,
+            "id": sid,
+            "login": login,
         },
     }
 
@@ -624,8 +634,16 @@ def checkout_extra_ron(
 
 
 def seller_id(item: dict):
+    """Vinted member id, or None when missing/unknown. Never treat 0 as a seller."""
     user = item.get("user") or {}
-    return user.get("id") if isinstance(user, dict) else None
+    if not isinstance(user, dict):
+        return None
+    raw = user.get("id")
+    try:
+        sid = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return sid if sid > 0 else None
 
 
 def matching_watches(item: dict, watches: list) -> list:
@@ -770,9 +788,13 @@ def apply_fresh_items(rows: list, fresh: dict) -> None:
         iid = str(row["item"].get("id"))
         if iid in fresh:
             keep_profile = row["item"].get("_profile")
+            keep_user = row["item"].get("user")
             row["item"] = fresh[iid]
             if keep_profile and not row["item"].get("_profile"):
                 row["item"]["_profile"] = keep_profile
+            # Availability payloads sometimes omit seller — don't wipe a known id.
+            if seller_id(row["item"]) is None and seller_id({"user": keep_user}) is not None:
+                row["item"]["user"] = keep_user
 
 
 def seed_pool_from_history(watches: list) -> list:
@@ -852,6 +874,8 @@ def assemble_bundles(scored: list, config: dict) -> tuple[list, list]:
                 continue
             seen_row_ids.add(rid)
             unique.append(row)
+        # Defend against corrupt pool rows that share a fake seller id.
+        unique = [r for r in unique if seller_id(r["item"]) == sid]
         keeps = [
             r for r in unique
             if is_keep(r["score"], config, r["watch_obj"], r["item"])
@@ -1330,6 +1354,8 @@ def main() -> None:
                         "url": r["item"].get("url"),
                         "watch": r["watch"],
                         "deal_score": r["score"].get("deal_score"),
+                        "seller_id": seller_id(r["item"]),
+                        "seller": (r["item"].get("user") or {}).get("login"),
                     }
                     for r in bundle["keeps"] + bundle["extras"]
                 ],
