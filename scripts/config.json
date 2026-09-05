@@ -11,6 +11,7 @@
   "solo_floor_clothing_ron": 0,
   "bundle_extra_min_score": 7,
   "closet_crawl_limit": 12,
+  "closet_crawl_max_sellers": 20,
   "checkout_extra_ron": {
     "ro": 25,
     "hu": 30,

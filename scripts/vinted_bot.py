@@ -329,27 +329,74 @@ def get_seller_items(user_id, country: str, limit: int) -> list:
     return closets.get(str(user_id), [])
 
 
-def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, list]:
+def _closet_chunks(user_ids: list, chunk_size: int = 5) -> list[list[int]]:
     unique = []
     for uid in user_ids:
         if uid and uid not in unique:
             unique.append(int(uid))
-    if not unique:
-        return {}
-    data = _vinted_json(
-        ["batch"],
-        timeout=120,
-        stdin_payload={"closets": {"country": country, "ids": unique, "limit": limit}},
-    )
-    out = {}
-    for row in (data or {}).get("closets") or []:
-        sid = str(row.get("sellerId"))
-        if row.get("error"):
-            print(f"Closet crawl failed for seller {sid}: {row['error']}", file=sys.stderr)
-            out[sid] = []
+    if chunk_size < 1:
+        chunk_size = 1
+    return [unique[i:i + chunk_size] for i in range(0, len(unique), chunk_size)]
+
+
+def get_seller_closets(user_ids: list, country: str, limit: int) -> dict[str, list]:
+    """Fetch closets in small CLI chunks — one huge batch times out on FULL_SWEEP."""
+    chunks = _closet_chunks(user_ids, chunk_size=5)
+    out: dict[str, list] = {}
+    for chunk in chunks:
+        # ~20–40s per closet under load; keep headroom without one giant timeout.
+        timeout = max(90, 35 * len(chunk))
+        try:
+            data = _vinted_json(
+                ["batch"],
+                timeout=timeout,
+                stdin_payload={
+                    "closets": {"country": country, "ids": chunk, "limit": limit},
+                },
+            )
+        except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
+            print(
+                f"Closet crawl chunk failed for {country} "
+                f"({len(chunk)} sellers): {e}",
+                file=sys.stderr,
+            )
             continue
-        out[sid] = [_normalize_item(it) for it in (row.get("items") or []) if it.get("id") is not None]
+        for row in (data or {}).get("closets") or []:
+            sid = str(row.get("sellerId"))
+            if row.get("error"):
+                print(f"Closet crawl failed for seller {sid}: {row['error']}", file=sys.stderr)
+                out[sid] = []
+                continue
+            out[sid] = [
+                _normalize_item(it)
+                for it in (row.get("items") or [])
+                if it.get("id") is not None
+            ]
     return out
+
+
+def select_closet_crawl_sellers(candidates: list, config: dict) -> list:
+    """Cap and rank closet crawl targets: keeps first, then higher scores."""
+    max_sellers = int(config.get("closet_crawl_max_sellers", 20))
+    ranked = sorted(
+        candidates,
+        key=lambda c: (
+            1 if c.get("is_keep") else 0,
+            _as_int_score((c.get("score") or {}).get("deal_score")),
+        ),
+        reverse=True,
+    )
+    seen = set()
+    picked = []
+    for c in ranked:
+        sid = c.get("sid")
+        if sid is None or sid in seen:
+            continue
+        seen.add(sid)
+        picked.append(c)
+        if len(picked) >= max_sellers:
+            break
+    return picked
  
  
 # ---------- scoring ----------
@@ -1115,8 +1162,7 @@ def main() -> None:
 
     crawled_triggers = set(str(x) for x in state.get("crawled_trigger_ids", []))
     crawl_limit = int(config.get("closet_crawl_limit", 12))
-    crawl_jobs: dict[str, list] = {}
-    crawl_meta = []
+    crawl_candidates = []
     for row in list(scored) + prior_rows:
         sid = seller_id(row["item"])
         if sid is None:
@@ -1126,19 +1172,37 @@ def main() -> None:
         trigger = str(row["item"].get("id"))
         if row in scored and trigger in crawled_triggers:
             continue
-        if any(m["sid"] == sid for m in crawl_meta):
-            continue
         if row in scored:
             crawled_triggers.add(trigger)
-        country = _country(row["watch_obj"])
-        crawl_jobs.setdefault(country, []).append(sid)
-        crawl_meta.append({"sid": sid, "country": country})
+        crawl_candidates.append({
+            "sid": sid,
+            "country": _country(row["watch_obj"]),
+            "score": row.get("score") or {},
+            "is_keep": is_keep(
+                row.get("score") or {},
+                config,
+                row.get("watch_obj") or {},
+                row.get("item"),
+            ),
+        })
+    crawl_meta = select_closet_crawl_sellers(crawl_candidates, config)
+    if len(crawl_candidates) > len(crawl_meta):
+        print(
+            f"Closet crawl capped to {len(crawl_meta)}/"
+            f"{len({c['sid'] for c in crawl_candidates})} sellers "
+            f"(closet_crawl_max_sellers)",
+            file=sys.stderr,
+        )
+    crawl_jobs: dict[str, list] = {}
+    for meta in crawl_meta:
+        crawl_jobs.setdefault(meta["country"], []).append(meta["sid"])
     closets_by_sid: dict[str, list] = {}
     for country, ids in crawl_jobs.items():
-        try:
-            closets_by_sid.update(get_seller_closets(ids, country, crawl_limit))
-        except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
-            print(f"Closet crawl batch failed for {country}: {e}", file=sys.stderr)
+        print(
+            f"Closet crawl {country}: {len(ids)} seller(s) in chunks of 5",
+            file=sys.stderr,
+        )
+        closets_by_sid.update(get_seller_closets(ids, country, crawl_limit))
     for meta in crawl_meta:
         closet = closets_by_sid.get(str(meta["sid"]), [])
         by_watch: dict[str, list] = {}
