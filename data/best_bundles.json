@@ -1,5 +1,44 @@
 [
   {
+    "kept_at": "2026-09-05T20:27:14.406038+00:00",
+    "kind": "near_haul",
+    "seller": "diamencikowo",
+    "seller_id": 104082847,
+    "country": "pl",
+    "checkout_extra_ron": 25.156,
+    "listing_sum": 43.120000000000005,
+    "checkout_total": 68.27600000000001,
+    "deal_score": null,
+    "value_band": "opportunity",
+    "reason": "Fee-gated closet match (not LLM-confirmed)",
+    "watch": "H&M Mama bundle seed L-XL",
+    "effective_price_per_useful_item": 34.138000000000005,
+    "items": [
+      {
+        "role": "haul",
+        "id": 9762121547,
+        "title": "Czarna Koszula 100% bawełna",
+        "price": 18.48,
+        "url": "https://www.vinted.ro/items/9762121547-czarna-koszula-100-bawelna",
+        "watch": "H&M Mama bundle seed L-XL",
+        "deal_score": null,
+        "seller": "diamencikowo",
+        "seller_id": 104082847
+      },
+      {
+        "role": "haul",
+        "id": 9790010512,
+        "title": "Półgolf w paski",
+        "price": 24.64,
+        "url": "https://www.vinted.ro/items/9790010512-polgolf-w-paski",
+        "watch": "H&M Mama bundle seed L-XL",
+        "deal_score": null,
+        "seller": "diamencikowo",
+        "seller_id": 104082847
+      }
+    ]
+  },
+  {
     "kept_at": "2026-09-05T20:23:39.453954+00:00",
     "kind": "near_haul",
     "seller": "nutka2008",
@@ -230,45 +269,6 @@
         "deal_score": null,
         "seller": "madadutz1",
         "seller_id": 253367971
-      }
-    ]
-  },
-  {
-    "kept_at": "2026-09-05T20:22:19.494691+00:00",
-    "kind": "near_haul",
-    "seller": "diamencikowo",
-    "seller_id": 104082847,
-    "country": "pl",
-    "checkout_extra_ron": 25.156,
-    "listing_sum": 43.120000000000005,
-    "checkout_total": 68.27600000000001,
-    "deal_score": null,
-    "value_band": "opportunity",
-    "reason": "Fee-gated closet match (not LLM-confirmed)",
-    "watch": "H&M Mama bundle seed L-XL",
-    "effective_price_per_useful_item": 34.138000000000005,
-    "items": [
-      {
-        "role": "haul",
-        "id": 9762121547,
-        "title": "Czarna Koszula 100% bawełna",
-        "price": 18.48,
-        "url": "https://www.vinted.ro/items/9762121547-czarna-koszula-100-bawelna",
-        "watch": "H&M Mama bundle seed L-XL",
-        "deal_score": null,
-        "seller": "diamencikowo",
-        "seller_id": 104082847
-      },
-      {
-        "role": "haul",
-        "id": 9790010512,
-        "title": "Półgolf w paski",
-        "price": 24.64,
-        "url": "https://www.vinted.ro/items/9790010512-polgolf-w-paski",
-        "watch": "H&M Mama bundle seed L-XL",
-        "deal_score": null,
-        "seller": "diamencikowo",
-        "seller_id": 104082847
       }
     ]
   },
