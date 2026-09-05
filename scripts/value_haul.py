@@ -32,6 +32,8 @@ def value_haul_config(config: dict) -> dict:
         "keep_value_bands": ["steal", "hunt"],
         "max_candidates_to_score": 12,
         "max_value_hauls_per_run": 3,
+        "max_closet_sellers": 40,
+        "max_seeds_per_watch": 25,
     }
     merged = dict(defaults)
     merged.update(config.get("value_haul") or {})
@@ -49,7 +51,11 @@ def _listing_amount(item: dict):
 def size_matches(item: dict, target_sizes: list[str]) -> bool:
     if not target_sizes:
         return True
-    raw = item.get("size_title") or item.get("title") or ""
+    # Require an explicit size field — falling back to title matches random
+    # letters (e.g. Hungarian "Lődd") and invents false closet candidates.
+    raw = item.get("size_title") or item.get("size") or ""
+    if not str(raw).strip():
+        return False
     normalized = str(raw).upper()
     return any(
         re.search(rf"(?<![A-Z0-9]){re.escape(str(target).upper())}(?![A-Z0-9])", normalized)
@@ -67,6 +73,7 @@ def looks_like_haul_fit(item: dict, watch: dict) -> bool:
     """Cheap prefilter: gymwear or maternity pieces matching the haul watch."""
     blob = f"{item.get('title') or ''} {item.get('brand_title') or ''}".lower()
     notes = (watch.get("notes") or "").lower()
+    name = (watch.get("name") or "").lower()
     for word in notes.replace(",", " ").split():
         if len(word) >= 4 and word in blob:
             return True
@@ -74,8 +81,17 @@ def looks_like_haul_fit(item: dict, watch: dict) -> bool:
     if is_maternity_watch(watch):
         if any(tok in blob for tok in MATERNITY_TOKENS):
             return True
-        # Notes often list brands (Mama, Seraphine, …); require a real brand hit,
-        # not a generic garment word like "tee" alone.
+        # Bundle seeds: accept the seed brand + size even when the title omits
+        # "maternity" (common for H&M Mama / Next / ASOS closet fillers).
+        if watch.get("bundle_hunt"):
+            if ("h&m" in name or "mama" in name) and (
+                "h&m" in blob or re.search(r"\bhm\b", blob) or "mama" in blob
+            ):
+                return True
+            if "next" in name and "next" in blob:
+                return True
+            if "asos" in name and "asos" in blob:
+                return True
         return False
     if any(tok in blob for tok in GYM_TOKENS):
         return True

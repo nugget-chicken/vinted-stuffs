@@ -50,9 +50,24 @@ class PrefilterTests(unittest.TestCase):
     def test_wrong_size_rejected(self):
         self.assertFalse(vh.size_matches(item(1, "tee", size="S"), ["M", "L"]))
 
-    def test_title_letters_do_not_override_size(self):
+    def test_missing_size_does_not_match_via_title(self):
+        it = item(1, "Please L me alone gym", size="")
+        it["size_title"] = None
+        self.assertFalse(vh.size_matches(it, ["M", "L"]))
+
+    def test_maternity_seed_accepts_hm_without_maternity_word(self):
+        mat_watch = {
+            "target_sizes": ["L", "XL"],
+            "target_type": "women's maternity clothing",
+            "name": "H&M Mama bundle seed L-XL",
+            "bundle_hunt": True,
+            "notes": "bundle seed",
+        }
+        self.assertTrue(
+            vh.looks_like_haul_fit(item(1, "Tricou H&M", brand="H&M", size="L"), mat_watch)
+        )
         self.assertFalse(
-            vh.size_matches(item(1, "Gym training top", size="S"), ["M", "L"])
+            vh.looks_like_haul_fit(item(2, "Nike tee", brand="Nike", size="L"), mat_watch)
         )
 
     def test_gym_title_accepted(self):

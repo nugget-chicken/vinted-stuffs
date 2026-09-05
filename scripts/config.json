@@ -53,12 +53,14 @@
       "hunt"
     ],
     "max_candidates_to_score": 12,
-    "max_value_hauls_per_run": 15
+    "max_value_hauls_per_run": 15,
+    "max_closet_sellers": 40,
+    "max_seeds_per_watch": 25
   },
   "watches": [
     {
       "name": "Gym bundle seeds M-L",
-      "query": "sport",
+      "query": "h&m sport",
       "country": "ro",
       "order": "newest_first",
       "per_page": 50,

@@ -1347,6 +1347,12 @@ def main() -> None:
         if not full_sweep:
             new_items = new_items[: _max_new_items_per_watch(config)]
         if watch in bundle_hunts:
+            seed_cap = int(
+                (config.get("value_haul") or {}).get("max_seeds_per_watch")
+                or _max_new_items_per_watch(config)
+            )
+            # Don't mark hundreds of FULL_SWEEP hits as seen without crawling them.
+            new_items = new_items[:seed_cap]
             for item in new_items:
                 mark_seen(state, item.get("id"), watch["name"])
                 sid = seller_id(item)
@@ -1433,6 +1439,21 @@ def main() -> None:
             file=sys.stderr,
         )
     premium_crawl_seller_keys = {str(meta["sid"]) for meta in crawl_meta}
+    # Cap value-haul closet crawls — FULL_SWEEP seeds can explode to 1000+ sellers.
+    max_vh_sellers = int(vh_cfg.get("max_closet_sellers", 40))
+    vh_seller_list = sorted(
+        value_haul_sellers.values(),
+        key=lambda m: len(m.get("trigger_items") or []),
+        reverse=True,
+    )
+    if len(vh_seller_list) > max_vh_sellers:
+        print(
+            f"Value-haul closet crawl capped to {max_vh_sellers}/"
+            f"{len(vh_seller_list)} sellers (value_haul.max_closet_sellers)",
+            file=sys.stderr,
+        )
+        vh_seller_list = vh_seller_list[:max_vh_sellers]
+        value_haul_sellers = {str(m["sid"]): m for m in vh_seller_list}
     crawl_jobs: dict[tuple[str, int], list] = {}
     for meta in crawl_meta:
         crawl_jobs.setdefault((meta["country"], crawl_limit), []).append(meta["sid"])
