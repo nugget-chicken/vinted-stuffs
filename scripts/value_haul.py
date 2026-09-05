@@ -12,6 +12,19 @@ GYM_TOKENS = (
     "ten thousand", "compression", "dry-fit", "dri-fit", "tech tee",
 )
 
+GYM_GARMENTS = (
+    "tee", "t-shirt", "tshirt", "short", "legging", "hoodie", "tank",
+    "top", "póló", "polo", "tricou", "hanorac", "bluza", "sweat",
+    "jogg", "train", "sport", "move", "dry", "compress", "koszulka",
+)
+
+GYM_REJECT = (
+    "blazer", "marynarka", "jeans", "blugi", "sukienka", "dress", "skirt",
+    "spódnic", "shoe", "buty", "sneakers", "heel", "loafer", "bag",
+    "geacă", "jacket", "coat", "płaszcz", "marynark", "koszula eleg",
+    "stanik", "bra ", " bra", "biustonosz",
+)
+
 MATERNITY_TOKENS = (
     "maternity", "mama", "nursing", "pregnancy", "pregnant", "bump",
     "seraphine", "isabella oliver", "noppies", "mamalicious", "boob",
@@ -74,13 +87,13 @@ def looks_like_haul_fit(item: dict, watch: dict) -> bool:
     blob = f"{item.get('title') or ''} {item.get('brand_title') or ''}".lower()
     notes = (watch.get("notes") or "").lower()
     name = (watch.get("name") or "").lower()
-    for word in notes.replace(",", " ").split():
-        if len(word) >= 4 and word in blob:
-            return True
     target = (watch.get("target_type") or "").lower()
     if is_maternity_watch(watch):
         if any(tok in blob for tok in MATERNITY_TOKENS):
             return True
+        for word in notes.replace(",", " ").split():
+            if len(word) >= 4 and word in blob:
+                return True
         # Bundle seeds: accept the seed brand + size even when the title omits
         # "maternity" (common for H&M Mama / Next / ASOS closet fillers).
         if watch.get("bundle_hunt"):
@@ -93,12 +106,20 @@ def looks_like_haul_fit(item: dict, watch: dict) -> bool:
             if "asos" in name and "asos" in blob:
                 return True
         return False
-    if any(tok in blob for tok in GYM_TOKENS):
+
+    if any(tok in blob for tok in GYM_REJECT):
+        return False
+    has_garment = any(g in blob for g in GYM_GARMENTS)
+    has_sport = any(tok in blob for tok in GYM_TOKENS)
+    # Brand-only hits (Nike shoe, Adidas jacket) need a gym garment word too.
+    if has_sport and has_garment:
+        return True
+    if has_sport and any(s in blob for s in ("sport", "training", "gym", "running", "workout", "move")):
         return True
     if "gym" in target or "training" in target or "sport" in target:
-        if any(
-            w in blob
-            for w in ("tee", "t-shirt", "short", "legging", "hoodie", "tank", "top", "póló", "tricou")
+        if has_garment and (
+            has_sport
+            or any(w in blob for w in ("h&m", "hm ", "decathlon", "craft"))
         ):
             return True
     return False
