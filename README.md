@@ -55,7 +55,7 @@ After deploy: open the Vercel URL → enter `DASHBOARD_SECRET` → **Run hunt** 
 ### Schedulers
 
 1. **Primary:** GitHub Actions `*/15 * * * *` (already in the workflow).
-2. **Optional backup:** Vercel Cron hits `/api/cron` hourly (`vercel.json`). Hobby plans may only allow daily cron — keep GitHub as the real 15‑min schedule.
+2. **Optional backup:** Vercel Cron hits `/api/cron` once daily at 06:00 UTC (`vercel.json`; Hobby plan limit). Keep GitHub Actions as the real 15‑min schedule.
 
 ## Dashboard features
 
